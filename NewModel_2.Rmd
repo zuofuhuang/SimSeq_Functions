@@ -1,0 +1,161 @@
+---
+title: "Cluster assignment related attempts"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(TraMineR)
+library(performance)
+library(GLMMadaptive)
+library(pscl)
+library(rbenchmark)
+library(foreach)
+library(doParallel)
+library(fastcluster)
+library(fitdistrplus)
+library(truncnorm)
+library(MASS)
+library(clValid)
+library(clv)
+```
+
+```{r}
+# source("Functions.R")
+# source("Functions_start12am.R")
+source("Functions_start_with_clusters.R")
+```
+
+```{r}
+sequences <- read.csv("sequences.csv")[,-1]
+seq_distances <- read.csv("1929sequences_dist_om.csv")[,-1]
+
+colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
+                 as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
+
+sim_seq_noCluster <- read.csv("simulated_sequences_no_cluster.csv")[,-1]
+sim_seq_Dunn <- read.csv("simulated_sequences_by_Dunn.csv")[,-1]
+sim_seq_Separate <- read.csv("simulated_sequences_bySeparate.csv")[,-1]
+
+dist_mat_noCluster <- read.csv("simulated_seq_noCluster_dist_om.csv")[,-1]
+dist_mat_byDunn <- read.csv("simulated_seq_byDunn_dist_om.csv")[,-1]
+dist_mat_bySeparate <- read.csv("simulated_seq_bySeparate_dist_om.csv")[,-1]
+```
+
+
+
+```{r}
+reorder_cluster_assignment <- function(assignment){
+  tbl <- table(assignment)
+  groups <- length(tbl)
+  
+  list <- list()
+  for (i in 1:groups){
+    list[[i]] <- which(assignment == i)
+  }
+  
+  sorted_tbl <- sort(tbl, decreasing = TRUE)
+  cluster_num_by_size <- as.numeric(names(sorted_tbl))
+  
+  for (j in 1:groups){
+    assignment[list[[(cluster_num_by_size[j])]]] <- j
+  }
+  
+  return(assignment)
+}
+
+
+# Distribution of number of transitions each day
+transitions_per_day <- function(sequence){
+  return(length((rle(sequence)$length)))
+}
+
+# sim_seq_Dunn[is.na(sim_seq_Dunn)] <- "N/A"
+# la <- apply(sim_seq_Dunn, 1, transitions_per_day)
+```
+
+```{r}
+cluster_assignment <- create_clusters_Dunn(dist_mat_byDunn)
+cluster_assignment <- reorder_cluster_assignment(cluster_assignment)
+cluster_assignment[cluster_assignment > 2] <- 3
+
+hclust_real <- stats::hclust(as.dist(dist_mat_bySeparate), method = "average")
+fit_real <- cutree(hclust_real, k = 15)
+fit_real <- reorder_cluster_assignment(fit_real)
+fit_real[fit_real > 2] <- 3
+```
+
+
+
+
+## Helpful code
+
+```{r}
+# sequences[is.na(sequences)] <- "N/A"
+# sequences[sequences == "N/A] <- NA
+```
+
+
+### Code for distribution plots
+
+```{r}
+sim_seq_Dunn[sim_seq_Dunn == "N/A"] <- NA
+seqplot(seqdef(sim_seq_Dunn), border = NA, type = "d", cex.legend = 0.5)
+```
+
+### Code for calculating distance matrix
+
+```{r}
+# simulated_sequences_noCluster[simulated_sequences_noCluster == "N/A"] <- NA
+# seq_costs_noCluster <- seqcost(seqdef(simulated_sequences_noCluster), method = "TRATE", with.missing = TRUE)
+# seq_distances_noCluster <- seqdist(seqdef(simulated_sequences_noCluster), method = "OM", 
+#                          indel = seq_costs_noCluster$indel, sm = seq_costs_noCluster$sm, with.missing = TRUE)
+# 
+# simulated_sequences_bySeparate[simulated_sequences_bySeparate == "N/A"] <- NA
+# seq_costs_bySeparate <- seqcost(seqdef(simulated_sequences_bySeparate), method = "TRATE", with.missing = TRUE)
+# seq_distances_bySeparate <- seqdist(seqdef(simulated_sequences_bySeparate), method = "OM", 
+#                          indel = seq_costs_bySeparate$indel, sm = seq_costs_bySeparate$sm, with.missing = TRUE)
+# 
+# simulated_sequences_byDunn[simulated_sequences_byDunn == "N/A"] <- NA
+# seq_costs_byDunn <- seqcost(seqdef(simulated_sequences_byDunn), method = "TRATE", with.missing = TRUE)
+# seq_distances_byDunn <- seqdist(seqdef(simulated_sequences_byDunn), method = "OM",
+#                          indel = seq_costs_byDunn$indel, sm = seq_costs_byDunn$sm, with.missing = TRUE)
+```
+
+
+
+
+## Some ideas to keep in mind (In the NewModels.Rmd)
+
+What parameters of sequences change the nature of sequences? (State, ordering, duration)
+
+**Haven't solved the problem of missing data**
+
+
+*----------------------------------*
+
+1. Inter-cluster distances between simulated sequences and original sequences
+
+2. Make sure that the method adequately generates sequences with certain characteristics 
+
+3. Account for sequences of different lengths
+
+
+A separate comment: Overall trend is fine, but the tails are larger. Structurally, the model is not fully complex, so there is not sufficient tool to capture the structure.
+
+*----------------------------------*
+
+
+The steps above are very heuristic. Building a local transition matrix is a means to help with the smoothing problem. 
+
+Alternatively, we could have the activities overlap from each other. Then, we can use tools including the transition matrix to smooth over. (But then there are a lot of edge cases around the overlapping pattern that we have to take care of.)
+
+Lastly, we also want to take into account that the day doesn't necessarily start with 00:00 if someone sleeps at 1am.
+
+The other idea we talked about during the meeting is to view the sequence as a collection of time series. When simulating time series, we can use the residuals to quantify. When simulating sequences, we can quantify our changed with a collection of residuals.
+
+Alternatively, can we use some strategies with multivariate time series in economics? https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/
+
+
