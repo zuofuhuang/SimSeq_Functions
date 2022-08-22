@@ -40,7 +40,6 @@ create_clusters_Dunn <- function(distances, clust = "hclust", method = "average"
   }
 
   num <- apply(dunn_index, 2, which.max)
-  print(dunn_index)
   final_cluster <- cutree(hclust_real, k = num[4])
   return(final_cluster)
 }
@@ -110,9 +109,9 @@ activity_transition <- function(sequence, time, activity, margin = 60, from = TR
   rle_result <- rle(subseq)
   activity_positions <- which(rle_result$values == activity)
   cumSum <- cumsum(rle_result$lengths)
-  
+
   if (length(activity_positions) == 0) return() # The interval does not contain the corresponding activity
-  
+
   if (from){
     if(activity_positions[length(activity_positions)] == length(rle(subseq)$length)){ # get rid of the last index if it is true
       activity_positions <- head(activity_positions, -1)
@@ -126,13 +125,13 @@ activity_transition <- function(sequence, time, activity, margin = 60, from = TR
     position <- window[1] + cumSum[activity_positions - 1] - 1 # Position in the entire day
     activity <- rle_result$values[activity_positions - 1]
   }
-  
+
   if (length(activity_positions) == 0) return() # After we delete the first/last one, interval does not contain corresponding activity
-  
+
   if (!setequal(unname(sequence[position]),unname(activity))){
     stop("Activity state does not match")
   }
-  
+
   # Find out the length of the subsequence that contains position
   lens <- rle(sequence)$length
   seq_cumSum <- c(0,cumsum(lens))
@@ -140,7 +139,7 @@ activity_transition <- function(sequence, time, activity, margin = 60, from = TR
   levels(cutted) <- 1:length(lens)
   position <- lens[cutted]
   names(position) <- activity
-  
+
   return(position)
 }
 
@@ -166,30 +165,30 @@ create_freq_table <- function(sequences){
 simulate_one_sequence <- function(sequences, cluster, margin = 60){
   len <- ncol(sequences)
   result <- rep(NA, len)
-  
+
   # which cluster does this sequence that we are simulating belong to?
   cluster_assignment <- sample(cluster, 1)
-  
+
   row_num <- which(cluster == cluster_assignment)
   sequences <- sequences %>%
     slice(row_num)
   starting_activity <- sample(sequences[,1], 1)
-  
+
   subset <- sequences %>%
     filter(.[[1]] == starting_activity)
   # subsequences <- data.frame(t(apply(subset, 1, find_subsequence, activity = starting_activity, time = 1)))
   ends <- apply(subset, 1, end_of_first_activity)
 
-  
-  # Draw one randomly 
+
+  # Draw one randomly
   # right <- subsequences$X2[sample(1:nrow(subsequences),1)]
   right <- sample(ends, 1)
-  
+
   result[1:right] <- starting_activity
   right_activity <- starting_activity
-  
+
   while (right < len){
-    transitions <- unlist(apply(sequences, 1, activity_transition, 
+    transitions <- unlist(apply(sequences, 1, activity_transition,
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
 
     if (is.null(transitions)){
@@ -199,17 +198,19 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
       rand <- sample(1:length(transitions), size = 1)
       dur <- transitions[rand]
       activity <- names(transitions)[rand]
-      
+
       if (dur + right > len)  dur <- len - right
-      
+
       result[(right + 1):(right + dur)] <- rep(activity, dur)
       right <- right + dur
       right_activity <- activity
     }
   }
-  
+
   return(result)
 }
+
+
 
 
 simulate_multiple_sequences <- function(data, cluster, n){
