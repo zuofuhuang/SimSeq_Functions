@@ -102,6 +102,50 @@ end_of_first_activity <- function(sequence){
 
 # from: from this activity to other activities.
 # On the left, we are interested in how other activities transform to this activity, so from = FALSE.
+activity_transition <- function(sequence, time, activity, margin = 60, from = TRUE){
+  len <- length(sequence)
+  window <- c(max(1, time - margin), min(time + margin, len))
+  subseq <- sequence[window[1]:window[2]] # The subsequence (the interval) to focus on
+  rle_result <- rle(subseq)
+  activity_positions <- which(rle_result$values == activity)
+  cumSum <- cumsum(rle_result$lengths)
+  
+  if (length(activity_positions) == 0) return() # The interval does not contain the corresponding activity
+  
+  if (from){
+    if(activity_positions[length(activity_positions)] == length(rle(subseq)$length)){ # get rid of the last index if it is true
+      activity_positions <- head(activity_positions, -1)
+    }
+    position <- window[1] + cumSum[activity_positions] # Position in the entire day
+    activity <- (rle_result$values)[activity_positions + 1]
+  } else {
+    if(activity_positions[1] == 1){  # get rid of the first index if it is true
+      activity_positions <- tail(activity_positions, -1)
+    }
+    position <- window[1] + cumSum[activity_positions - 1] - 1 # Position in the entire day
+    activity <- rle_result$values[activity_positions - 1]
+  }
+  
+  if (length(activity_positions) == 0) return() # After we delete the first/last one, interval does not contain corresponding activity
+  
+  if (!setequal(unname(sequence[position]),unname(activity))){
+    stop("Activity state does not match")
+  }
+  
+  # Find out the length of the subsequence that contains position
+  lens <- rle(sequence)$length
+  seq_cumSum <- c(0,cumsum(lens))
+  cutted <- cut(position, seq_cumSum)
+  levels(cutted) <- 1:length(lens)
+  position <- lens[cutted]
+  names(position) <- activity
+  
+  return(position)
+}
+
+
+# from: from this activity to other activities.
+# On the left, we are interested in how other activities transform to this activity, so from = FALSE.
 activity_transition_2tran <- function(sequence, time, activity, margin = 60, from = TRUE){
   len <- length(sequence)
   window <- c(max(1, time - margin), min(time + margin, len))
@@ -174,7 +218,6 @@ create_freq_table <- function(sequences){
 
 
 
-
 simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
   len <- ncol(sequences)
   result <- rep(NA, len)
@@ -204,11 +247,24 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
     transitions <- unlist(apply(sequences, 1, activity_transition_2tran, 
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
     
-    if (is.null(transitions)){
+    if (is.null(transitions)){ # Ideally it never goes into the if statement.
       result[(right + 1) : min(right + margin, len)] <- right_activity
       right <- min(right + margin, len)
     } else {
-      # ??????
+      # TODO
+      # 1. Need to get the prior activity for this!!!
+      # 2. If the prior activity by 2 for this sequence we are simulating is none, 
+      #       then predict using the previous one activity.
+      # 3. Otherwise, use the previous two activities. (If the transitions contain none, then that day is not a day of
+      #       the characteristics?)
+      
+      
+      
+      
+      
+      
+      
+      
       rand <- sample(1:length(transitions), size = 1)
       dur <- transitions[rand]
       activity <- names(transitions)[rand]

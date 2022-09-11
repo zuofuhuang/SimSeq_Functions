@@ -1,0 +1,112 @@
+---
+title: "Analysis"
+author: "Zuofu Huang"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+library(TraMineR)
+library(performance)
+library(GLMMadaptive)
+library(pscl)
+library(rbenchmark)
+library(foreach)
+library(doParallel)
+library(fastcluster)
+library(fitdistrplus)
+library(truncnorm)
+library(MASS)
+library(clValid)
+library(clv)
+```
+
+# Cluster sequences
+
+```{r}
+reorder_cluster_assignment <- function(assignment){
+  tbl <- table(assignment)
+  groups <- length(tbl)
+  
+  list <- list()
+  for (i in 1:groups){
+    list[[i]] <- which(assignment == i)
+  }
+  
+  sorted_tbl <- sort(tbl, decreasing = TRUE)
+  cluster_num_by_size <- as.numeric(names(sorted_tbl))
+  
+  for (j in 1:groups){
+    assignment[list[[(cluster_num_by_size[j])]]] <- j
+  }
+  
+  return(assignment)
+}
+```
+
+
+```{r}
+# When the user does not input their own clustering assignment
+create_clusters_Dunn <- function(distances, clust = "hclust", method = "average"){
+  # if (clust != "hclust"){
+  #   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
+  # }
+  
+  hclust_real <- stats::hclust(as.dist(distances), method = method)
+  dunn_index <- matrix(0, nrow = 100, ncol = 8)
+  
+  for (i in 2:100){
+    fit_real <- cutree(hclust_real, k = i)
+    scatt <- cls.scatt.diss.mx(distances, fit_real)
+    dunn_index[i,] <- clv.Dunn(scatt, intracls = c("complete", "average"),
+                               intercls = c("single", "complete", "average", "hausdorff")) 
+  }
+
+  num <- apply(dunn_index, 2, which.max)
+  final_cluster <- cutree(hclust_real, k = 3)
+  return(final_cluster)
+}
+```
+
+
+```{r}
+hclust_real <- stats::hclust(as.dist(seq_distances_subset))
+final_cluster <- cutree(hclust_real, k = 10)
+```
+
+```{r}
+sequences <- read.csv("../sequences.csv")[,-1]
+seq_distances <- read.csv("../1929sequences_dist_om.csv")[,-1]
+
+colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
+                 as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
+
+subset <- sequences[,1:480]
+subset[subset == "N/A"] <- NA
+seq_costs_subset <- seqcost(seqdef(subset), method = "TRATE", with.missing = TRUE)
+seq_distances_subset <- seqdist(seqdef(subset), method = "OM", indel = seq_costs_subset$indel, sm = seq_costs_subset$sm, with.missing = TRUE)
+
+clusters <- create_clusters_Dunn(seq_distances_subset)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Distribution of number of transitions each day
+transitions_per_day <- function(sequence){
+  return(length((rle(sequence)$length)))
+}
+```
+
+
