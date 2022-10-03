@@ -1,27 +1,16 @@
-# This version of Functions_start_with_clusters starts at 12am!
-# Need to create the distance matrix first at once, which can be computationally intensive.
-
-
-
-# When the user does not input their own clustering assignment
-# create_clusters <- function(distances, clust = "hclust", method = "average"){
-  # if (clust != "hclust"){
-  #   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
-  # }
-
-#   hclust_real <- stats::hclust(as.dist(distances), method = method)
-#   dunn_index <- rep(0, 100) # The first one is Inf; we will denote as 0.
-#   for (i in 2:100){
-#     fit_real <- cutree(hclust_real, k = i)
-#     dunn_index[i] <- dunn(distance = distances, clusters = fit_real)
-#   }
-# 
-#   num <- which.max(dunn_index)
-#   final_cluster <- cutree(hclust_real, k = num)
-#   return(final_cluster) # need to suppress the warning
-# }
-
+create_freq_table <- function(sequences){
+  states <- seqstatl(sequences)
+  freq_table <- matrix(NA, nrow = length(states), ncol = ncol(sequences))
   
+  for (i in 1:length(states)){
+    dat <- (sequences == states[i])
+    sums <- colSums(dat, na.rm = T)/nrow(dat)
+    freq_table[i,] <- sums
+  }
+  freq_table <- data.frame(freq_table)
+  rownames(freq_table) <- states
+  return(freq_table)
+}
 
 # When the user does not input their own clustering assignment
 create_clusters_Dunn <- function(distances, clust = "hclust", method = "average"){
@@ -43,31 +32,6 @@ create_clusters_Dunn <- function(distances, clust = "hclust", method = "average"
   final_cluster <- cutree(hclust_real, k = num[4])
   return(final_cluster)
 }
-
-
-
-
-create_clusters_DB <- function(distances, clust = "hclust", method = "average"){
-  # if (clust != "hclust"){
-  #   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
-  # }
-  
-  hclust_real <- stats::hclust(as.dist(distances), method = method)
-  DB_index <- matrix(10, nrow = 100, ncol = 8)
-  
-  for (i in 2:100){
-    fit_real <- cutree(hclust_real, k = i)
-    scatt <- cls.scatt.diss.mx(distances, fit_real)
-    DB_index[i,] <- clv.Davies.Bouldin(scatt, intracls = c("complete", "average"),
-                                       intercls = c("single", "complete", "average", "hausdorff")) 
-  }
-  
-  num <- apply(DB_index, 2, which.min)
-  print(num)
-  final_cluster <- cutree(hclust_real, k = num[1])
-  return(final_cluster)
-}
-
 
 
   
@@ -144,20 +108,6 @@ activity_transition <- function(sequence, time, activity, margin = 60, from = TR
 }
 
 
-create_freq_table <- function(sequences){
-  states <- seqstatl(sequences)
-  freq_table <- matrix(NA, nrow = length(states), ncol = ncol(sequences))
-  
-  for (i in 1:length(states)){
-    dat <- (sequences == states[i])
-    sums <- colSums(dat, na.rm = T)/nrow(dat)
-    freq_table[i,] <- sums
-  }
-  freq_table <- data.frame(freq_table)
-  rownames(freq_table) <- states
-  return(freq_table)
-}
-
 
 
 # Input sequences have to be vectorized already.
@@ -187,6 +137,8 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
   result[1:right] <- starting_activity
   right_activity <- starting_activity
 
+  
+  # THIS IS THE CORE PART TO CHANGE
   while (right < len){
     transitions <- unlist(apply(sequences, 1, activity_transition,
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
@@ -226,8 +178,7 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n){
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    set.seed(i)
-    source("Functions_12am_clusters.R")
+    source("Functions_start_with_clusters_HSMM.R")
     simulated <- simulate_one_sequence(data, cluster) # calling a function
     simulated
   }

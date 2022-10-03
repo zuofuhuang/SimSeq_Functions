@@ -161,7 +161,8 @@ parallel_simulate_multiple_sequences <- function(data, n){
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS')) %dopar% {
-    source("Functions_start12am.R")
+    source("Functions_12am.R")
+    set.seed(i)
     simulated <- simulate_one_sequence(data) # calling a function
     simulated
   }

@@ -1,0 +1,18 @@
+---
+title: "la"
+author: "Zuofu Huang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r}
+library(TraMineR)
+
+sim_seqs_TVMC_33 <- read.csv("../Data in use/sim_seqs_TVMC_seed33.csv")[,-1]
+colnames(sim_seqs_TVMC_33) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
+
+sim_seqs_TVMC_33[sim_seqs_TVMC_33 == "N/A"] <- NA
+seq_costs <- seqcost(seqdef(sim_seqs_TVMC_33), method = "TRATE", with.missing = TRUE)
+seq_distances <- seqdist(seqdef(sim_seqs_TVMC_33), method = "OM", 
+                         indel = seq_costs$indel, sm = seq_costs$sm, with.missing = TRUE)
+```
+
