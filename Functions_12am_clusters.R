@@ -179,11 +179,9 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
   # subsequences <- data.frame(t(apply(subset, 1, find_subsequence, activity = starting_activity, time = 1)))
   ends <- apply(subset, 1, end_of_first_activity)
 
-
   # Draw one randomly
   # right <- subsequences$X2[sample(1:nrow(subsequences),1)]
   right <- sample(ends, 1)
-
   result[1:right] <- starting_activity
   right_activity <- starting_activity
 
@@ -191,7 +189,7 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
     transitions <- unlist(apply(sequences, 1, activity_transition,
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
 
-    if (is.null(transitions)){
+    if (is.null(transitions)){ # This is almost impossible to happen
       result[(right + 1) : min(right + margin, len)] <- right_activity
       right <- min(right + margin, len)
     } else {
@@ -213,22 +211,22 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
 
 
 
-simulate_multiple_sequences <- function(data, cluster, n){
-  simulated <- replicate(n, simulate_one_sequence(data, cluster))
+simulate_multiple_sequences <- function(data, cluster, n, margin = 60){
+  simulated <- replicate(n, simulate_one_sequence(data, cluster, margin = margin))
   result <- data.frame(t(simulated))
   return(result)
 }
 
 
-parallel_simulate_multiple_sequences <- function(data, cluster, n){
+parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin = 60){
   cores <- detectCores()
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    set.seed(i)
+    set.seed(seeds[i])
     source("Functions_12am_clusters.R")
-    simulated <- simulate_one_sequence(data, cluster) # calling a function
+    simulated <- simulate_one_sequence(data, cluster, margin) # calling a function
     simulated
   }
   

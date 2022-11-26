@@ -173,14 +173,14 @@ simulate_multiple_sequences <- function(data, n){
 }
 
 
-parallel_simulate_multiple_sequences <- function(data, n){
+parallel_simulate_multiple_sequences <- function(data, n, seeds){
   cores <- detectCores()
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'tmvtnorm')) %dopar% {
     source("Functions.R")
-    set.seed(i)
+    set.seed(seeds[i])
     simulated <- simulate_one_sequence(data) # calling a function
     simulated
   }

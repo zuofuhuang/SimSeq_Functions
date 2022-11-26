@@ -39,11 +39,11 @@ source("Functions_start12am.R")
 #   mutate(end_min = floor(as.numeric(hms(end_timeonly)-1)/60) + 1) %>%
 #   mutate(dur = end_min - start_min)
 # 
-# # We have 2900 + dates. Here we only extract day sequences with a cor1ponding biweekly survey. If we want all the days, we can replace data with wide_data_2 in creating `new` dataset.
-# new <- data %>% 
+# # We have 2900 + dates. Here we only extract day sequences with a corresponding biweekly survey. If we want all the days, we can replace data with wide_data_2 in creating `new` dataset.
+# new <- data %>%
 #   dplyr::select(record_id, date)
 # new <- cbind(new, data.frame(matrix(NA, nrow = nrow(new), ncol = 1440)))
-# colnames(new) <- c("record_id", "date", format(seq(as.POSIXct("00:00:00", format = "%T"), 
+# colnames(new) <- c("record_id", "date", format(seq(as.POSIXct("00:00:00", format = "%T"),
 #            as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
 # 
 # for (i in 1:nrow(new)){
@@ -52,7 +52,7 @@ source("Functions_start12am.R")
 #   subset <- wide_data2 %>%
 #     filter(record_id == id) %>%
 #     filter(start_dateonly == date)
-#   
+# 
 #   for(j in 1:nrow(subset)){
 #     start <- subset$start_min[j] + 3
 #     end <- subset$end_min[j] + 2
@@ -66,14 +66,14 @@ source("Functions_start12am.R")
 # # Of course, the lengths of sequences are different. How would we adjust for that?
 # # It's fine (actually more realistic if we don't adjust for that)
 # sequences <- new[,-c(1,2)]
-```
-
-```{r}
-sequences <- read.csv("sequences.csv")[,-1]
-seq_distances <- read.csv("1929sequences_dist_om.csv")[,-1]
-
-colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
-                 as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
+# ```
+# 
+# ```{r}
+# sequences <- read.csv("sequences.csv")[,-1]
+# seq_distances <- read.csv("1929sequences_dist_om.csv")[,-1]
+# 
+# colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
+#                  as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
 ```
 
 
@@ -85,12 +85,6 @@ What parameters of sequences change the nature of sequences? (State, ordering, d
 
 
 ```{r}
-# Start with a seed anyway
-set.seed(2022)
-
-# About 4-5 seconds per sequence
-# simulated_sequences <- simulate_multiple_sequences(sequences, 500)
-
 # For the sake of generating sequences only: Change NA to N/A
 # sequences[is.na(sequences)] <- "N/A"
 

@@ -18,6 +18,7 @@ library(fastcluster)
 library(fitdistrplus)
 library(MASS)
 library(clValid)
+library(stringr)
 library(clv)
 library(TraMineRextras)
 ```
@@ -26,9 +27,10 @@ library(TraMineRextras)
 source("cluster_assignment_fun.R")
 # source("Functions.R")
 # source("Functions_12am.R")
-# source("Functions_12am_clusters.R")
+source("Functions_12am_clusters.R")
 # source("Functions_12am_clusters_2tran.R")
 # source("Functions_12am_clusters_TVMC.R")
+# source("Functions_12am_clusters_TVMC_neighbor.R")
 ```
 
 ```{r}
@@ -36,6 +38,7 @@ sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
 colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
                  as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
 seq_distances <- read.csv("../Data in use/original_seqs_dist_om.csv")[,-1]
+
 # Divide up into clusters by Dunn index, then regroup.
 cluster_assignment <- create_clusters_Dunn(seq_distances)
 cluster_assignment <- reorder_cluster_assignment(cluster_assignment)
@@ -48,52 +51,84 @@ cluster_assignment[cluster_assignment > 2] <- 3
 # fit_real[fit_real > 2] <- 3
 ```
 
-For all simulated sequences, the seed is 1:n, different for each sequence.
+For all simulated sequences, the seed is 1:n + c, different for each sequence.
+
+```{r}
+vec <- c()
+for(i in 1:nrow(subset)){
+  this <- subset[i,]
+  vec <- c(vec, tail(rle(this)$lengths,1))
+}
+```
 
 ```{r}
 sequences[is.na(sequences)] <- "N/A"
-# simulated_seqs_cluster <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929)
+
+# sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, n = 1929, seeds = 1:1929)
+sim_seqs_noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
+
+# sim_seqs_cluster <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*1)
 sim_seqs_clusters <- read.csv("../Data in use/sim_seqs_cluster.csv")[,-1]
 
-# sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, n = 1929)
-sim_seqs_noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
+# sim_seqs_noCluster_2tran <- parallel_simulate_multiple_sequences(sequences, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*2)
+sim_seqs_noCluster_2tran <- read.csv("../Data in use/sim_seqs_noCluster_2tran.csv")[,-1]
+
+# sim_seqs_cluster_2tran <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*3)
+sim_seqs_clusters_2tran <- read.csv("../Data in use/sim_seqs_cluster_2tran.csv")[,-1]
 
 
 # Simulate via time-varying markov chain with input of k = 3, using Functions_12am_clusters_TVMC.R
 # Could calculate all the transition probabilities beforehand. But this works pretty fast too...
-# sim_seqs_cluster_TVMC <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929)
+
+# sim_seqs_noCluster_TVMC <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*4)
+sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+
+# sim_seqs_cluster_TVMC <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*5)
 sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
 
 
-# sim_seqs_noCluster_TVMC <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929)
-sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+# Each is one minute. Geez.
+# sim_seqs_noCluster_TVMC_neighbor <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*6)
+# sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+
+# sim_seqs_cluster_TVMC_neighbor <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*7)
+# sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+```
+
+
+**Distribution plots**
+
+```{r message=FALSE}
+sequences[sequences == "N/A"] <- NA
+p1 <- seqplot(seqdef(sequences), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_clusters[sim_seqs_clusters == "N/A"] <- NA
+p2 <- seqplot(seqdef(sim_seqs_clusters), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_noCluster[sim_seqs_noCluster == "N/A"] <- NA
+p3 <- seqplot(seqdef(sim_seqs_noCluster), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_clusters_2tran[sim_seqs_clusters_2tran == "N/A"] <- NA
+p4 <- seqplot(seqdef(sim_seqs_clusters), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_noCluster_2tran[sim_seqs_noCluster_2tran == "N/A"] <- NA
+p5 <- seqplot(seqdef(sim_seqs_noCluster_2tran), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_clusters_TVMC[sim_seqs_clusters_TVMC == "N/A"] <- NA
+p6 <- seqplot(seqdef(sim_seqs_clusters_TVMC), border = NA, type = "d", cex.legend = 0.5)
+
+sim_seqs_noCluster_TVMC[sim_seqs_noCluster_TVMC == "N/A"] <- NA
+p7 <- seqplot(seqdef(sim_seqs_noCluster_TVMC), border = NA, type = "d", cex.legend = 0.5) + scale_color_brewer(palette = "Greens")
 ```
 
 ```{r message=FALSE}
 sequences_T <- seqdef(sequences)
 sim_seqs_clusters_T <- seqdef(sim_seqs_clusters)
-sim_seqs_clusters_TVMC_T <- seqdef(sim_seqs_clusters_TVMC)
 sim_seqs_noCluster_T <- seqdef(sim_seqs_noCluster)
+sim_seqs_clusters_2tran_T <- seqdef(sim_seqs_clusters_2tran)
+sim_seqs_noCluster_2tran_T <- seqdef(sim_seqs_noCluster_2tran)
+sim_seqs_clusters_TVMC_T <- seqdef(sim_seqs_clusters_TVMC)
 sim_seqs_noCluster_TVMC_T <- seqdef(sim_seqs_noCluster_TVMC)
-```
-
-## Distribution plots
-
-```{r}
-# sequences[sequences == "N/A"] <- NA
-# p1 <- seqplot(sequences_T, border = NA, type = "d", cex.legend = 0.5)
-# 
-# sim_seqs_clusters[sim_seqs_clusters == "N/A"] <- NA
-# p2 <- seqplot(sim_seqs_clusters_T, border = NA, type = "d", cex.legend = 0.5)
-# 
-# sim_seqs_clusters_TVMC[sim_seqs_clusters_TVMC == "N/A"] <- NA
-# p3 <- seqplot(sim_seqs_clusters_TVMC_T, border = NA, type = "d", cex.legend = 0.5)
-# 
-# sim_seqs_noCluster[sim_seqs_noCluster == "N/A"] <- NA
-# p4 <- seqplot(sim_seqs_noCluster_T, border = NA, type = "d", cex.legend = 0.5)
-# 
-# sim_seqs_noCluster_TVMC[sim_seqs_noCluster_TVMC == "N/A"] <- NA
-# p5 <- seqplot(sim_seqs_noCluster_TVMC_T, border = NA, type = "d", cex.legend = 0.5)
 ```
 
 ## Percentage of each activity
@@ -101,11 +136,13 @@ sim_seqs_noCluster_TVMC_T <- seqdef(sim_seqs_noCluster_TVMC)
 ```{r}
 a1 <- seqmeant(sequences_T)
 a2 <- seqmeant(sim_seqs_clusters_T)
-a3 <- seqmeant(sim_seqs_clusters_TVMC_T)
-a4 <- seqmeant(sim_seqs_noCluster_T)
-a5 <- seqmeant(sim_seqs_noCluster_TVMC_T)
+a3 <- seqmeant(sim_seqs_noCluster_T)
+a4 <- seqmeant(sim_seqs_clusters_2tran_T)
+a5 <- seqmeant(sim_seqs_noCluster_2tran_T)
+a6 <- seqmeant(sim_seqs_clusters_TVMC_T)
+a7 <- seqmeant(sim_seqs_noCluster_TVMC_T)
 
-cbind(a1, a2, a3, a4, a5)
+cbind(a1, a2, a3, a4, a5, a6, a7)
 ```
 
 
@@ -118,18 +155,24 @@ d1 <- apply(dist1, 2, sd)
 dist2 <- seqistatd(sim_seqs_clusters_T)
 c2 <- apply(dist2, 2, mean)
 d2 <- apply(dist2, 2, sd)
-dist3 <- seqistatd(sim_seqs_clusters_TVMC_T)
+dist3 <- seqistatd(sim_seqs_noCluster_T)
 c3 <- apply(dist3, 2, mean)
 d3 <- apply(dist3, 2, sd)
-dist4 <- seqistatd(sim_seqs_noCluster_T)
+dist4 <- seqistatd(sim_seqs_clusters_2tran_T)
 c4 <- apply(dist4, 2, mean)
 d4 <- apply(dist4, 2, sd)
-dist5 <- seqistatd(sim_seqs_noCluster_TVMC_T)
+dist5 <- seqistatd(sim_seqs_noCluster_2tran_T)
 c5 <- apply(dist5, 2, mean)
 d5 <- apply(dist5, 2, sd)
+dist6 <- seqistatd(sim_seqs_clusters_TVMC_T)
+c6 <- apply(dist6, 2, mean)
+d6 <- apply(dist6, 2, sd)
+dist7 <- seqistatd(sim_seqs_noCluster_TVMC_T)
+c7 <- apply(dist7, 2, mean)
+d7 <- apply(dist7, 2, sd)
 
-cbind(c1, c2, c3, c4, c5)
-cbind(d1, d2, d3, d4, d5)
+cbind(c1, c2, c3, c4, c5, c6, c7)
+cbind(d1, d2, d3, d4, d5, d6, d7)
 ```
 
 
@@ -138,14 +181,16 @@ cbind(d1, d2, d3, d4, d5)
 ```{r}
 b1 <- seqlength(seqdss(sequences_T))
 b2 <- seqlength(seqdss(sim_seqs_clusters_T))
-b3 <- seqlength(seqdss(sim_seqs_clusters_TVMC_T))
-b4 <- seqlength(seqdss(sim_seqs_noCluster_T))
-b5 <- seqlength(seqdss(sim_seqs_noCluster_TVMC_T))
+b3 <- seqlength(seqdss(sim_seqs_noCluster_T))
+b4 <- seqlength(seqdss(sim_seqs_clusters_2tran_T))
+b5 <- seqlength(seqdss(sim_seqs_noCluster_2tran_T))
+b6 <- seqlength(seqdss(sim_seqs_clusters_TVMC_T))
+b7 <- seqlength(seqdss(sim_seqs_noCluster_TVMC_T))
 ```
 
-Means: 10.3, 11.2, 10.4, 11.4, 10.4
+Means: 10.1, 10.8, 11.0, 10.8, 10.6, 10.2, 10.2
 
-SDs: 9.0, 7.0, 5.8, 6.8, 5.5
+SDs: 8.8, 6.9, 6.6, 7.1, 6.5, 5.8, 5.5
 
 TVMC performs better with respect to the mean, but worse with respect to standard deviation.
 
@@ -158,12 +203,26 @@ work2 <- dist2[,"WORK"]
 work3 <- dist3[,"WORK"]
 work4 <- dist4[,"WORK"]
 work5 <- dist5[,"WORK"]
+work6 <- dist6[,"WORK"]
+work7 <- dist7[,"WORK"]
 ```
 
 From here, we do see the benefit of clustering (and the benefit of not using Markov Chain, yay!)
 
 Maybe if the clustering idea is good, we can think of adding the individual level through clustering as well.
 
+
+## Number of distinct work periods per day
+
+```{r}
+work_num1 <- table(rowSums(seqdss(sequences_T) == "WORK"))
+work_num2 <- table(rowSums(seqdss(sim_seqs_clusters_T) == "WORK"))
+work_num3 <- table(rowSums(seqdss(sim_seqs_noCluster_T) == "WORK"))
+work_num4 <- table(rowSums(seqdss(sim_seqs_clusters_2tran_T) == "WORK"))
+work_num5 <- table(rowSums(seqdss(sim_seqs_noCluster_2tran_T) == "WORK"))
+work_num6 <- table(rowSums(seqdss(sim_seqs_clusters_TVMC_T) == "WORK"))
+work_num7 <- table(rowSums(seqdss(sim_seqs_noCluster_TVMC_T) == "WORK"))
+```
 
 
 ## How much home does each day have?
@@ -174,19 +233,9 @@ home2 <- dist2[,"HOME"]
 home3 <- dist3[,"HOME"]
 home4 <- dist4[,"HOME"]
 home5 <- dist5[,"HOME"]
+home6 <- dist6[,"HOME"]
+home7 <- dist7[,"HOME"]
 ```
-
-
-## Number of distinct work periods per day
-
-```{r}
-work_num1 <- table(rowSums(seqdss(sequences_T) == "WORK"))
-work_num2 <- table(rowSums(seqdss(sim_seqs_clusters_T) == "WORK"))
-work_num3 <- table(rowSums(seqdss(sim_seqs_clusters_TVMC_T) == "WORK"))
-work_num4 <- table(rowSums(seqdss(sim_seqs_noCluster_T) == "WORK"))
-work_num5 <- table(rowSums(seqdss(sim_seqs_noCluster_TVMC_T) == "WORK"))
-```
-
 
 
 ## Sum of percentage of each state squared
@@ -206,11 +255,26 @@ sum_of_state_pct <- function(ref, data){
   }
   return(dist)
 }
-
-sum_of_state_pct(sequences_T, sim_seqs_clusters_T)
-sum_of_state_pct(sequences_T, sim_seqs_clusters_TVMC_T)
-sum_of_state_pct(sequences_T, sim_seqs_noCluster_T)
-sum_of_state_pct(sequences_T, sim_seqs_noCluster_T)
 ```
+
+```{r}
+sum_of_state_pct(sequences_T, sim_seqs_clusters_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_T)
+sum_of_state_pct(sequences_T, sim_seqs_clusters_2tran_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_2tran_T)
+sum_of_state_pct(sequences_T, sim_seqs_clusters_TVMC_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_TVMC_T)
+```
+
+
+
+
+
+
+
+```{r}
+sim_seqs_clusters
+```
+
 
 

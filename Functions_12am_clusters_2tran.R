@@ -67,7 +67,7 @@ activity_transition_2tran <- function(sequence, time, activity, margin = 60, fro
 
 
 
-# Risks overfitting.
+# Risks overfitting
 simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
   len <- ncol(sequences)
   result <- rep(NA, len)
@@ -84,8 +84,7 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
     filter(.[[1]] == starting_activity)
   ends <- apply(subset, 1, end_of_first_activity)
   
-  # Draw one randomly 
-  right <- sample(ends, 1)
+  right <- sample(ends, 1) # Draw one randomly 
   result[1:right] <- starting_activity
   right_activity <- starting_activity
   
@@ -94,26 +93,39 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
     
     activities <- names(transitions)
-    previous <- sub("\\-WORK.*", "", activities)
-    after <- sub(".*WORK-", "", activities)
+    previous <- sub(paste0("-",right_activity,"-.*"), "", activities)   
+    after <- sub(paste0(".*-",right_activity,"-"), "", activities)  
     
-    rle_res <- rle(result[1:right])$values
-    
-    if (length(rle_res) == 1){
-      prev_activity <- "None"   # Pair with NONE in the previous activity
+    if (length(after) == 0){
+      result[(right + 1) : min(right + margin, len)] <- right_activity
+      right <- min(right + margin, len)
     } else {
-      prev_activity <- rle_res[length(rle_res) - 1]   # Pair with previous activity
-    }
-    
-    rand <- sample(1:(which(previous == prev_activity)), size = 1)
-    activity <- activities[rand]
-    dur <- transitions[rand]
-    
-    if (dur + right > len)  dur <- len - right
+      rle_res <- rle(result[1:right])$values
       
-    result[(right + 1):(right + dur)] <- rep(activity, dur)
-    right <- right + dur
-    right_activity <- activity
+      if (length(rle_res) == 1){
+        prev_activity <- "None"   # Pair with NONE in the previous activity
+      } else {
+        prev_activity <- rle_res[length(rle_res) - 1]   # Pair with previous activity
+      }
+      
+      indices <- which(previous == prev_activity)
+      
+      if(length(indices) == 0){
+        # Cannot borrow information from previous. Go back to only using this to predict next.
+        rand <- sample(1:length(after), size = 1)
+      } else {
+        rand <- sample(indices, size = 1)
+      }
+      
+      activity <- after[rand]
+      dur <- transitions[rand]
+      
+      if (dur + right > len)  dur <- len - right
+      
+      result[(right + 1):(right + dur)] <- rep(activity, dur)
+      right <- right + dur
+      right_activity <- activity
+    }
   }
   
   return(result)
@@ -127,15 +139,15 @@ simulate_multiple_sequences <- function(data, cluster, n){
 }
 
 
-parallel_simulate_multiple_sequences <- function(data, cluster, n){
+parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin = 60){
   cores <- detectCores()
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
     source("Functions_12am_clusters_2tran.R")
-    set.seed(i)
-    simulated <- simulate_one_sequence_2tran(data, cluster) # calling a function
+    set.seed(seeds[i])
+    simulated <- simulate_one_sequence_2tran(data, cluster, margin) # calling a function
     simulated
   }
   

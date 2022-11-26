@@ -2,7 +2,6 @@
 # Need to create the distance matrix first at once, which can be computationally intensive.
 
 
-
 # When the user does not input their own clustering assignment
 # create_clusters <- function(distances, clust = "hclust", method = "average"){
   # if (clust != "hclust"){
@@ -100,10 +99,17 @@ vectorize_seq <- function(sequence){
 
 
 
-get_next_candidates <- function(sequences, time, activity){
-  this <- sequences[,c(time, time+1)]
-  this <- this[this[,1] == activity,]
-  return(as.vector(this[,2]))
+get_next_activity <- function(sequences, time, activity, margin){
+  this <- sequences[,max(1,time-margin):min(1440,time+margin)]
+  new <- as.matrix(this[,1:2])
+  for (i in 2:(ncol(this) - 1)){
+    new <- rbind(new, as.matrix(this[,c(i,i+1)]))
+  }
+  transMat <- prop.table(table(new[,1], new[,2]), 1)
+  
+  index <- which(rownames(transMat) == activity)
+  next_act <- sample(1:ncol(transMat), size = 1, prob = transMat[index,])
+  return(colnames(transMat)[next_act])
 }
 
 
@@ -126,9 +132,8 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
   result[1] <- current_activity
   
   while (current_time < 1440){
-    candidates <- get_next_candidates(this_cluster, current_time, current_activity)
     current_time <- current_time + 1
-    current_activity <- sample(candidates, 1)
+    current_activity <- get_next_activity(this_cluster, current_time, current_activity, margin = margin)
     result[current_time] <- current_activity
   }
 
@@ -136,22 +141,23 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
 }
 
 
-
-
-simulate_multiple_sequences <- function(data, cluster, n){
-  simulated <- replicate(n, simulate_one_sequence(data, cluster))
-  result <- data.frame(t(simulated))
-  return(result)
-}
+# Currently, don't use the non-parallelized version anymore. 
+# To support it later, would modify the code and add seed argument etc.
+# simulate_multiple_sequences <- function(data, cluster, n){
+#   simulated <- replicate(n, simulate_one_sequence(data, cluster))
+#   result <- data.frame(t(simulated))
+#   return(result)
+# }
 
 
 parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin = 60){
   cores <- detectCores()
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
-  
-  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    source("Functions_12am_clusters_TVMC.R")
+
+  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid',"stringr")) %dopar% {
+    # source("Functions_12am_clusters_TVMC_neighbor.R")
+    source("/Users/zuofuhuang/Desktop/SimSeq/SimSeq_Functions/Functions_12am_clusters_TVMC_neighbor.R")
     set.seed(seeds[i])
     simulated <- simulate_one_sequence(data, cluster, margin) # calling a function
     simulated
