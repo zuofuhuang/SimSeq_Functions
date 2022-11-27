@@ -50,20 +50,19 @@ cluster_assignment[cluster_assignment > 2] <- 3
 # fit_real[fit_real > 2] <- 3
 ```
 
+
+# Simulate sequences
+
+```{r}
+# RUN THIS BEFORE SYNTHESIS!
+sequences[is.na(sequences)] <- "N/A"
+```
+
+
 For all simulated sequences, the seed is 1:n + c, different for each sequence.
 
 ```{r}
-vec <- c()
-for(i in 1:nrow(subset)){
-  this <- subset[i,]
-  vec <- c(vec, tail(rle(this)$lengths,1))
-}
-```
-
-```{r}
-sequences[is.na(sequences)] <- "N/A"
-
-# sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, n = 1929, seeds = 1:1929)
+# sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, rep(1,1929), n = 1929, seeds = 1:1929)
 sim_seqs_noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
 
 # sim_seqs_cluster <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*1)
@@ -74,18 +73,22 @@ sim_seqs_noCluster_2tran <- read.csv("../Data in use/sim_seqs_noCluster_2tran.cs
 
 # sim_seqs_cluster_2tran <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*3)
 sim_seqs_clusters_2tran <- read.csv("../Data in use/sim_seqs_cluster_2tran.csv")[,-1]
+```
 
 
-# Simulate via time-varying markov chain with input of k = 3, using Functions_12am_clusters_TVMC.R
-# Could calculate all the transition probabilities beforehand. But this works pretty fast too...
+```{r}
+# Simulate via time-varying markov chain with input of k = 3, using TVMC.R
+# Could calculate all the transition probabilities beforehand. But this works pretty fast too
 
 # sim_seqs_noCluster_TVMC <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*4)
 sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
 
 # sim_seqs_cluster_TVMC <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*5)
 sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+```
 
 
+```{r}
 # Each is one minute. Geez.
 # sim_seqs_noCluster_TVMC_neighbor <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*6)
 # sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
@@ -95,7 +98,22 @@ sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,
 ```
 
 
-**Distribution plots**
+```{r}
+noCluster_new <- read.csv("../Data in use/noCluster_new.csv")[,-1]
+```
+
+
+```{r}
+# vec <- c()
+# for(i in 1:nrow(subset)){
+#   this <- subset[i,]
+#   vec <- c(vec, tail(rle(this)$lengths,1))
+# }
+```
+
+
+
+## Distribution plots
 
 ```{r message=FALSE}
 sequences[sequences == "N/A"] <- NA

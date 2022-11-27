@@ -234,7 +234,7 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
     set.seed(seeds[i])
-    source("Functions_12am_clusters.R")
+    source("clust_new.R")
     simulated <- simulate_one_sequence(data, cluster, margin) # calling a function
     simulated
   }
