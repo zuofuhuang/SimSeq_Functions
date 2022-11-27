@@ -132,11 +132,11 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
 }
 
 
-simulate_multiple_sequences <- function(data, cluster, n){
-  simulated <- replicate(n, simulate_one_sequence_2tran(data, cluster))
-  result <- data.frame(t(simulated))
-  return(result)
-}
+# simulate_multiple_sequences <- function(data, cluster, n){
+#   simulated <- replicate(n, simulate_one_sequence_2tran(data, cluster))
+#   result <- data.frame(t(simulated))
+#   return(result)
+# }
 
 
 parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin = 60){
@@ -145,7 +145,7 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    source("Functions_12am_clusters_2tran.R")
+    source("previous2.R")
     set.seed(seeds[i])
     simulated <- simulate_one_sequence_2tran(data, cluster, margin) # calling a function
     simulated

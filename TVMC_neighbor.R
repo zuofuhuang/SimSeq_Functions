@@ -156,8 +156,7 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   registerDoParallel(cl)
 
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid',"stringr")) %dopar% {
-    # source("Functions_12am_clusters_TVMC_neighbor.R")
-    source("/Users/zuofuhuang/Desktop/SimSeq/SimSeq_Functions/Functions_12am_clusters_TVMC_neighbor.R")
+    source("TVMC_neighbor.R")
     set.seed(seeds[i])
     simulated <- simulate_one_sequence(data, cluster, margin) # calling a function
     simulated

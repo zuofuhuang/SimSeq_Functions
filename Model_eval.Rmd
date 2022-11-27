@@ -24,13 +24,12 @@ library(TraMineRextras)
 ```
 
 ```{r}
-source("cluster_assignment_fun.R")
-# source("Functions.R")
-# source("Functions_12am.R")
-source("Functions_12am_clusters.R")
-# source("Functions_12am_clusters_2tran.R")
-# source("Functions_12am_clusters_TVMC.R")
-# source("Functions_12am_clusters_TVMC_neighbor.R")
+source("clust_assign_func.R")
+# source("clust.R")
+source("clust_new.R")
+# source("previous2.R")
+# source("TVMC.R")
+# source("TVMC_neighbor.R")
 ```
 
 ```{r}

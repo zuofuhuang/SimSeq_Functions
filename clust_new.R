@@ -138,7 +138,7 @@ activity_transition <- function(sequence, time, activity, margin = 60, from = TR
   cutted <- cut(position, seq_cumSum)
   levels(cutted) <- 1:length(lens)
   position <- lens[cutted]
-  names(position) <- activity
+  names(position) <- paste(activity, as.numeric(cutted == length(lens)))
 
   return(position)
 }
@@ -193,11 +193,19 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
       result[(right + 1) : min(right + margin, len)] <- right_activity
       right <- min(right + margin, len)
     } else {
+      all_names <- unlist(strsplit(names(transitions), " "))
+      all_act <- all_names[c(TRUE, FALSE)]
+      till_end <- as.numeric(all_names[c(FALSE, TRUE)])
+      
       rand <- sample(1:length(transitions), size = 1)
-      dur <- transitions[rand]
-      activity <- names(transitions)[rand]
+      activity <- all_act[rand]
 
-      if (dur + right > len)  dur <- len - right
+      if (right < 1320 & till_end[rand]){
+        dur <- len - right
+      } else {
+        dur <- transitions[rand]
+        if (dur + right > len)  dur <- len - right
+      }
 
       result[(right + 1):(right + dur)] <- rep(activity, dur)
       right <- right + dur
@@ -210,12 +218,13 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
 
 
 
-
-simulate_multiple_sequences <- function(data, cluster, n, margin = 60){
-  simulated <- replicate(n, simulate_one_sequence(data, cluster, margin = margin))
-  result <- data.frame(t(simulated))
-  return(result)
-}
+# Currently, we don't use the non-parallelized version anymore. 
+# To support it later, modify the code and add seed argument etc.
+# simulate_multiple_sequences <- function(data, cluster, n, margin = 60){
+#   simulated <- replicate(n, simulate_one_sequence(data, cluster, margin = margin))
+#   result <- data.frame(t(simulated))
+#   return(result)
+# }
 
 
 parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin = 60){
