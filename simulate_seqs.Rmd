@@ -1,0 +1,175 @@
+---
+title: "Cluster assignment related attempts"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(TraMineR)
+library(performance)
+library(GLMMadaptive)
+library(pscl)
+library(rbenchmark)
+library(foreach)
+library(doParallel)
+library(fastcluster)
+library(MASS)
+library(clValid)
+library(stringr)
+library(clv)
+library(TraMineRextras)
+```
+
+```{r}
+source("clust_assign_func.R")
+
+# source("clust.R")
+# source("clust_order2.R")
+# source("TVMC.R")
+# source("TVMC_neighbor.R")
+# source("clust_KDE.R")
+source("clust_KDE_order2.R")
+```
+
+```{r}
+sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
+colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
+                 as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
+seq_distances <- read.csv("../Data in use/original_seqs_dist_om.csv")[,-1]
+
+# Divide up into clusters by Dunn index, then regroup.
+cluster_assignment <- create_clusters_Dunn(seq_distances)
+cluster_assignment <- reorder_cluster_assignment(cluster_assignment)
+cluster_assignment[cluster_assignment > 2] <- 3
+
+# By when they first separate
+# hclust_real <- stats::hclust(as.dist(dist_mat_bySeparate), method = "average")
+# fit_real <- cutree(hclust_real, k = 15)
+# fit_real <- reorder_cluster_assignment(fit_real)
+# fit_real[fit_real > 2] <- 3
+```
+
+
+## Simulate sequences from original data
+
+```{r}
+# RUN THIS BEFORE SYNTHESIS!
+sequences[is.na(sequences)] <- "N/A"
+```
+
+For all simulated sequences, the seed is 1:n + c, different for each sequence.
+
+```{r}
+# sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, rep(1,1929), n = 1929, seeds = 1:1929)
+sim_seqs_noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
+
+# sim_seqs_cluster <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*1)
+sim_seqs_clusters <- read.csv("../Data in use/sim_seqs_cluster.csv")[,-1]
+
+# sim_seqs_noCluster_order2 <- parallel_simulate_multiple_sequences(sequences, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*2)
+sim_seqs_noCluster_order2 <- read.csv("../Data in use/sim_seqs_noCluster_order2.csv")[,-1]
+
+# sim_seqs_cluster_order2 <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*3)
+sim_seqs_clusters_order2 <- read.csv("../Data in use/sim_seqs_cluster_order2.csv")[,-1]
+```
+
+
+```{r}
+# Simulate via time-varying markov chain with input of k = 3, using TVMC.R
+# Could calculate all the transition probabilities beforehand. But this works pretty fast too
+
+# sim_seqs_noCluster_TVMC <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*4)
+sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+
+# sim_seqs_cluster_TVMC <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*5)
+sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+```
+
+
+
+```{r}
+# Each is one minute. Geez.
+# sim_seqs_noCluster_TVMC_neighbor <- parallel_simulate_multiple_sequences(sequences, rep(1, 1929), n = 1929, seeds = 1:1929 + 1929*6)
+# sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+
+# sim_seqs_cluster_TVMC_neighbor <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*7)
+# sim_seqs_clusters_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+```
+
+
+```{r}
+# sim_seqs_noCluster_bound <- parallel_simulate_multiple_sequences(sequences, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*8)
+# sim_seqs_noCluster_bound <- read.csv("../Data in use/sim_seqs_noCluster_bound.csv")[,-1]
+
+# sim_seqs_cluster_bound <- parallel_simulate_multiple_sequences(sequences, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*9)
+# sim_seqs_clusters_bound <- read.csv("../Data in use/sim_seqs_cluster_bound.csv")[,-1]
+```
+
+
+```{r}
+# vec <- c()
+# for(i in 1:nrow(subset)){
+#   this <- subset[i,]
+#   vec <- c(vec, tail(rle(this)$lengths,1))
+# }
+```
+
+
+## Use imputed sequences (Result 8-11)
+
+```{r}
+imputed_seqs <- read.csv("../Data in use/imputed_seqs.csv")[,-1]
+imputed_seqs[is.na(imputed_seqs)] <- "N/A"
+```
+
+
+```{r}
+# sim_seqs_imputed_noCluster <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*10)
+sim_seqs_imputed_noCluster <- read.csv("../Data in use/sim_seqs_imputed_noCluster.csv")[,2:1441]
+
+# sim_seqs_imputed_cluster <- parallel_simulate_multiple_sequences(imputed_seqs, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*11)
+sim_seqs_imputed_cluster <- read.csv("../Data in use/sim_seqs_imputed_cluster.csv")[,2:1441]
+```
+
+
+```{r}
+# sim_seqs_imputed_noCluster_order2 <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*12)
+sim_seqs_imputed_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_order2.csv")[,2:1441]
+
+# sim_seqs_imputed_cluster_order2 <- parallel_simulate_multiple_sequences(imputed_seqs, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*13)
+sim_seqs_imputed_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_cluster_order2.csv")[,2:1441]
+```
+
+
+
+## kernel + imputed sequences
+
+
+```{r}
+imputed_seqs <- read.csv("../Data in use/imputed_seqs.csv")[,-1]
+imputed_seqs[is.na(imputed_seqs)] <- "N/A"
+```
+
+
+```{r}
+# sim_seqs_imputed_KDE_noCluster <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*14)
+sim_seqs_imputed_KDE_noCluster <- read.csv("../Data in use/sim_seqs_imputed_KDE_noCluster.csv")[,2:1441]
+
+# sim_seqs_imputed_KDE_cluster <- parallel_simulate_multiple_sequences(imputed_seqs, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*15)
+sim_seqs_imputed_KDE_cluster <- read.csv("../Data in use/sim_seqs_imputed_KDE_cluster.csv")[,2:1441]
+```
+
+
+```{r}
+# sim_seqs_imputed_KDE_noCluster_order2 <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,1929), n = 1929, seeds = 1:1929 + 1929*16)
+# sim_seqs_imputed_KDE_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_KDE_noCluster_order2.csv")[,2:1441]
+
+
+# sim_seqs_imputed_KDE_cluster_order2 <- parallel_simulate_multiple_sequences(imputed_seqs, cluster_assignment, n = 1929, seeds = 1:1929 + 1929*17)
+sim_seqs_imputed_KDE_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_KDE_cluster_order2.csv")[,2:1441]
+```
+
+
+

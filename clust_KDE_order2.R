@@ -11,7 +11,7 @@ end_of_first_activity <- function(sequence){
 
 # from: from this activity to other activities.
 # On the left, we are interested in how other activities transform to this activity, so from = FALSE.
-activity_transition_2tran <- function(sequence, time, activity, margin = 60, from = TRUE){
+activity_transition_order2 <- function(sequence, time, activity, margin = 60, from = TRUE){
   len <- length(sequence)
   window <- c(max(1, time - margin), min(time + margin, len))
   subseq <- sequence[window[1]:window[2]] # The subsequence (the interval) to focus on
@@ -68,7 +68,7 @@ activity_transition_2tran <- function(sequence, time, activity, margin = 60, fro
 
 
 # Risks overfitting
-simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
+simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
   len <- ncol(sequences)
   result <- rep(NA, len)
   
@@ -88,8 +88,10 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
   result[1:right] <- starting_activity
   right_activity <- starting_activity
   
+  
+  ## Implement KDE
   while (right < len){
-    transitions <- unlist(apply(sequences, 1, activity_transition_2tran, 
+    transitions <- unlist(apply(sequences, 1, activity_transition_order2, 
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
     
     activities <- names(transitions)
@@ -102,7 +104,7 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
     } else {
       rle_res <- rle(result[1:right])$values
       
-      if (length(rle_res) == 1){
+      if (length(rle_res) == 1){ # This means that there is no previous 2 activity, the current one is starting activity
         prev_activity <- "None"   # Pair with NONE in the previous activity
       } else {
         prev_activity <- rle_res[length(rle_res) - 1]   # Pair with previous activity
@@ -111,14 +113,30 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
       indices <- which(previous == prev_activity)
       
       if(length(indices) == 0){
-        # Cannot borrow information from previous. Go back to only using this to predict next.
-        rand <- sample(1:length(after), size = 1)
-      } else {
-        rand <- sample(indices, size = 1)
+        # Cannot borrow information from previous. Go back to using this activity to predict next (like order 1).
+        activity <- after[sample(1:length(transitions), size = 1)]
+        potential_durations <- transitions[which(after == activity)]
+        
+        if(length(unique(potential_durations)) == 1){ # Cover edge case of only 1 data point even if we use this activity to predict next
+          dur <- potential_durations[1]
+        } else {
+          dens <- density(potential_durations, from = 1, to = 1440)
+          cdf.estimate <- cumsum(dens$y) / cumsum(dens$y)[length(dens$y)]  
+          sampled <- dens$x[findInterval(runif(1), cdf.estimate)+1]
+          dur <- round(sampled)
+        }
+      } else if (length(unique(indices) == 1)) { # There is only 1 matching data point, whose activity and length will be used
+        activity <- after[indices[1]]
+        dur <- transitions[indices[1]]
+      } else { # Use those that match order 2 to run KDE
+        activity <- after[sample(indices, size = 1)]
+        potential_durations <- transitions[which((previous == prev_activity) & (after == activity))]
+        
+        dens <- density(potential_durations, from = 1, to = 1440)
+        cdf.estimate <- cumsum(dens$y) / cumsum(dens$y)[length(dens$y)]  
+        sampled <- dens$x[findInterval(runif(1), cdf.estimate)+1]
+        dur <- round(sampled)
       }
-      
-      activity <- after[rand]
-      dur <- transitions[rand]
       
       if (dur + right > len)  dur <- len - right
       
@@ -133,7 +151,7 @@ simulate_one_sequence_2tran <- function(sequences, cluster, margin = 60){
 
 
 # simulate_multiple_sequences <- function(data, cluster, n){
-#   simulated <- replicate(n, simulate_one_sequence_2tran(data, cluster))
+#   simulated <- replicate(n, simulate_one_sequence_order2(data, cluster))
 #   result <- data.frame(t(simulated))
 #   return(result)
 # }
@@ -145,9 +163,9 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   registerDoParallel(cl)
   
   result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    source("previous2.R")
+    source("clust_KDE_order2.R")
     set.seed(seeds[i])
-    simulated <- simulate_one_sequence_2tran(data, cluster, margin) # calling a function
+    simulated <- simulate_one_sequence_order2(data, cluster, margin) # calling a function
     simulated
   }
   
