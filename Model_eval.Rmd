@@ -27,6 +27,7 @@ library(simukde)
 
 ```{r}
 sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
+sequences[is.na(sequences)] <- "N/A"
 imputed_seqs <- read.csv("../Data in use/imputed_seqs.csv")[,-1]
 
 sim_seqs_cluster <- read.csv("../Data in use/sim_seqs_cluster.csv")[,-1]
@@ -49,38 +50,38 @@ sim_seqs_imputed_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_n
 ## Distribution plots
 
 ```{r message=FALSE}
-sequences[sequences == "N/A"] <- NA
-p1 <- seqplot(seqdef(sequences), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_cluster[sim_seqs_cluster == "N/A"] <- NA
-p2 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_noCluster[sim_seqs_noCluster == "N/A"] <- NA
-p3 <- seqplot(seqdef(sim_seqs_noCluster), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_cluster_order2[sim_seqs_cluster_order2 == "N/A"] <- NA
-p4 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_noCluster_order2[sim_seqs_noCluster_order2 == "N/A"] <- NA
-p5 <- seqplot(seqdef(sim_seqs_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_cluster_TVMC[sim_seqs_cluster_TVMC == "N/A"] <- NA
-p6 <- seqplot(seqdef(sim_seqs_cluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_noCluster_TVMC[sim_seqs_noCluster_TVMC == "N/A"] <- NA
-p7 <- seqplot(seqdef(sim_seqs_noCluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_imputed_cluster[sim_seqs_imputed_cluster == "N/A"] <- NA
-p8 <- seqplot(seqdef(sim_seqs_imputed_cluster), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_imputed_noCluster[sim_seqs_imputed_noCluster == "N/A"] <- NA
-p9 <- seqplot(seqdef(sim_seqs_imputed_noCluster), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_imputed_cluster_order2[sim_seqs_imputed_cluster_order2 == "N/A"] <- NA
-p10 <- seqplot(seqdef(sim_seqs_imputed_cluster_order2), border = NA, type = "d", cex.legend = 0.5)
-
-sim_seqs_imputed_noCluster_order2[sim_seqs_imputed_noCluster_order2 == "N/A"] <- NA
-p11 <- seqplot(seqdef(sim_seqs_imputed_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
+# sequences[sequences == "N/A"] <- NA
+# p1 <- seqplot(seqdef(sequences), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster[sim_seqs_cluster == "N/A"] <- NA
+# p2 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster[sim_seqs_noCluster == "N/A"] <- NA
+# p3 <- seqplot(seqdef(sim_seqs_noCluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster_order2[sim_seqs_cluster_order2 == "N/A"] <- NA
+# p4 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster_order2[sim_seqs_noCluster_order2 == "N/A"] <- NA
+# p5 <- seqplot(seqdef(sim_seqs_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster_TVMC[sim_seqs_cluster_TVMC == "N/A"] <- NA
+# p6 <- seqplot(seqdef(sim_seqs_cluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster_TVMC[sim_seqs_noCluster_TVMC == "N/A"] <- NA
+# p7 <- seqplot(seqdef(sim_seqs_noCluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_cluster[sim_seqs_imputed_cluster == "N/A"] <- NA
+# p8 <- seqplot(seqdef(sim_seqs_imputed_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_noCluster[sim_seqs_imputed_noCluster == "N/A"] <- NA
+# p9 <- seqplot(seqdef(sim_seqs_imputed_noCluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_cluster_order2[sim_seqs_imputed_cluster_order2 == "N/A"] <- NA
+# p10 <- seqplot(seqdef(sim_seqs_imputed_cluster_order2), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_noCluster_order2[sim_seqs_imputed_noCluster_order2 == "N/A"] <- NA
+# p11 <- seqplot(seqdef(sim_seqs_imputed_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
 ```
 
 ```{r message=FALSE}
@@ -327,7 +328,8 @@ ggplot(data = entropies, aes(x = Length)) +
   theme_bw()
 ```
 
-## Transition Matrix
+
+## Transition Matrix?
 
 ```{r}
 tm1 <- seqtrate(sequences_T)
@@ -388,35 +390,4 @@ grid.arrange(g1,g2,g3, nrow = 3)
 ```
 
 
-
-
-
-## Bootstrap
-
-```{r}
-boot <- sequences[sample(1:1929, size = 1929, replace = T),]
-
-boot[boot == "N/A"] <- NA
-p_boot <- seqplot(seqdef(boot), border = NA, type = "d", cex.legend = 0.5)
-
-boot_T <- seqdef(boot)
-
-a_boot <- seqmeant(boot_T)
-
-dist_boot <- seqistatd(boot_T)
-c_boot <- apply(dist_boot, 2, mean)
-d_boot <- apply(dist_boot, 2, sd)
-
-b_boot <- seqlength(seqdss(boot_T))
-
-work_boot <- dist_boot[,"WORK"]
-home_boot <- dist_boot[,"HOME"]
-
-work_num_boot <- table(rowSums(seqdss(boot_T) == "WORK"))
-
-sum_of_state_pct(sequences_T, boot_T)
-
-entropy_boot <- TraMineR::seqient(boot_T)
-ks.test(entropy1, entropy_boot)
-```
 

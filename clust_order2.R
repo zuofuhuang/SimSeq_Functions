@@ -1,3 +1,12 @@
+sample_one <- function(samp){
+  if (length(samp) == 1){
+    return(samp)
+  } else {
+    return(sample(samp, 1))
+  }
+}
+
+
 # Takes in a row of TraMineR sequence
 vectorize_seq <- function(sequence){
   return(as.vector(unlist(sequence)))
@@ -83,8 +92,8 @@ simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
   subset <- sequences %>%
     filter(.[[1]] == starting_activity)
   ends <- apply(subset, 1, end_of_first_activity)
+  right <- sample_one(ends) # Draw one end time randomly
   
-  right <- sample(ends, 1) # Draw one randomly 
   result[1:right] <- starting_activity
   right_activity <- starting_activity
   
@@ -113,6 +122,8 @@ simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
       if(length(indices) == 0){
         # Cannot borrow information from previous. Go back to only using this to predict next.
         rand <- sample(1:length(after), size = 1)
+      } else if (length(indices) == 1){
+        rand <- indices
       } else {
         rand <- sample(indices, size = 1)
       }

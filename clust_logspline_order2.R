@@ -6,14 +6,24 @@ sample_one <- function(samp){
   }
 }
 
-
-KDE <- function(potential_durations){
-  # Used code from https://alfurka.github.io/2020-12-16-sampling-with-density-function/
-  dens <- density(potential_durations, from = 1, to = 1440)
-  cdf.estimate <- cumsum(dens$y) / cumsum(dens$y)[length(dens$y)]  
-  sampled <- dens$x[findInterval(runif(1), cdf.estimate)+1]
-  return(max(1,round(sampled)))
+sample_logspline <- function(potential_durations){
+  # logspline needs at least 10 data points and 3 unique ones.
+  if (length(potential_durations) > 9 & length(unique(potential_durations)) > 2){ 
+    dur <- tryCatch({
+      max(1,round(rlogspline(1, logspline(potential_durations, lbound = 1, ubound = 1440))))
+    },
+    warning = function(w){
+      sample(potential_durations, 1)
+    }, 
+    error = function(e){
+      sample(potential_durations, 1)
+    })
+  } else {
+    dur <- sample(potential_durations, 1)
+  }
+  return(dur)
 }
+
 
 
 # Takes in a row of TraMineR sequence
@@ -91,6 +101,7 @@ simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
   result <- rep(NA, len)
   
   # which cluster does this sequence that we are simulating belong to
+  # could use sample_one, if some clusters have size 1
   cluster_assignment <- sample(cluster, 1)
   
   row_num <- which(cluster == cluster_assignment)
@@ -102,12 +113,11 @@ simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
     filter(.[[1]] == starting_activity)
   ends <- apply(subset, 1, end_of_first_activity)
   right <- sample_one(ends) # Draw one end time randomly
-
+  
   result[1:right] <- starting_activity
   right_activity <- starting_activity
   
   
-  ## Implement KDE
   while (right < len){
     transitions <- unlist(apply(sequences, 1, activity_transition_order2, 
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
@@ -127,27 +137,17 @@ simulate_one_sequence_order2 <- function(sequences, cluster, margin = 60){
       } else {
         prev_activity <- rle_res[length(rle_res) - 1]   # Pair with previous activity
       }
-      
       indices <- which(previous == prev_activity)
       
-      if(length(indices) == 0){
-        # Cannot borrow information from previous. Go back to using this activity to predict next (like order 1).
+      if(length(indices) == 0){ # Cannot borrow information from previous activity
+        # Go back to using this activity to predict next (like order 1).
         activity <- after[sample(1:length(transitions), size = 1)]
         potential_durations <- transitions[which(after == activity)]
-        
-        if(length(unique(potential_durations)) == 1){ # Cover edge case of only 1 data point even if we use this activity to predict next
-          dur <- potential_durations[1]
-        } else {
-          dur <- KDE(potential_durations)
-        }
-      } else { # Use those that match order 2 to run KDE
+        dur <- sample_logspline(potential_durations)
+      } else { # We have order 2 matches
         activity <- after[sample_one(indices)]
         potential_durations <- transitions[which((previous == prev_activity) & (after == activity))]
-        if(length(unique(potential_durations)) == 1){ # Cover edge case of only 1 data point even if we use this activity to predict next
-          dur <- potential_durations[1]
-        } else {
-          dur <- KDE(potential_durations)
-        }
+        dur <- sample_logspline(potential_durations)
       }
       
       if (dur + right > len)  dur <- len - right
@@ -174,8 +174,8 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
   
-  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
-    source("clust_KDE_order2.R")
+  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid', 'logspline')) %dopar% {
+    source("clust_logspline_order2.R")
     set.seed(seeds[i])
     simulated <- simulate_one_sequence_order2(data, cluster, margin) # calling a function
     simulated

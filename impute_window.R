@@ -24,6 +24,16 @@ impute <- function(sequences, window){
 }
 
 
+set.seed(475)
 imputed <- impute(sequences, 60)
-
 imputed_seqs <- cbind(sequences, imputed)
+write.csv(imputed_seqs, "imputed_seqs.csv")
+
+
+set.seed(477)
+imputed_120 <- impute(sequences, 120)
+imputed_seqs_120 <- cbind(sequences, imputed_120)
+
+write.csv(imputed_seqs_120, "imputed_seqs_120.csv")
+
+

@@ -67,3 +67,21 @@ create_clusters_DB <- function(distances, clust = "hclust", method = "average"){
   final_cluster <- cutree(hclust_real, k = num[1])
   return(final_cluster)
 }
+
+# When the user does not input their own clustering assignment
+# create_clusters <- function(distances, clust = "hclust", method = "average"){
+# if (clust != "hclust"){
+#   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
+# }
+
+#   hclust_real <- stats::hclust(as.dist(distances), method = method)
+#   dunn_index <- rep(0, 100) # The first one is Inf; we will denote as 0.
+#   for (i in 2:100){
+#     fit_real <- cutree(hclust_real, k = i)
+#     dunn_index[i] <- dunn(distance = distances, clusters = fit_real)
+#   }
+# 
+#   num <- which.max(dunn_index)
+#   final_cluster <- cutree(hclust_real, k = num)
+#   return(final_cluster) # need to suppress the warning
+# }

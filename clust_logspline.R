@@ -7,6 +7,25 @@ sample_one <- function(samp){
 }
 
 
+sample_logspline <- function(potential_durations){
+  # logspline needs at least 10 data points and 3 unique ones.
+  if (length(potential_durations) > 9 & length(unique(potential_durations)) > 2){ 
+    dur <- tryCatch({
+      max(1,round(rlogspline(1, logspline(potential_durations, lbound = 1, ubound = 1440))))
+    },
+    warning = function(w){
+      sample(potential_durations, 1)
+    }, 
+    error = function(e){
+      sample(potential_durations, 1)
+    })
+  } else {
+    dur <- sample(potential_durations, 1)
+  }
+  return(dur)
+}
+
+
 # Takes in a row of TraMineR sequence
 vectorize_seq <- function(sequence){
   return(as.vector(unlist(sequence)))
@@ -117,18 +136,19 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
   
   result[1:right] <- starting_activity
   right_activity <- starting_activity
-  
+
   while (right < len){
     transitions <- unlist(apply(sequences, 1, activity_transition,
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
     
-    if (is.null(transitions)){ # This is almost impossible to happen
+    if (is.null(transitions)){ # Nothing else to transform to
       result[(right + 1) : min(right + margin, len)] <- right_activity
       right <- min(right + margin, len)
     } else {
-      rand <- sample(1:length(transitions), size = 1)
-      dur <- transitions[rand]
-      activity <- names(transitions)[rand]
+      # With logspline, also need to sample an activity first. 
+      activity <- names(transitions)[sample(1:length(transitions), size = 1)]
+      potential_durations <- transitions[which(names(transitions) == activity)]
+      dur <- sample_logspline(potential_durations)
       
       if (dur + right > len)  dur <- len - right
       
@@ -155,9 +175,9 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   cl <- makeCluster(cores - 1)
   registerDoParallel(cl)
   
-  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid')) %dopar% {
+  result <- foreach(i = 1:n, .combine = cbind, .packages = c('TraMineR','dplyr', 'MASS', 'clValid', 'logspline')) %dopar% {
     set.seed(seeds[i])
-    source("clust.R")
+    source("clust_logspline.R")
     simulated <- simulate_one_sequence(data, cluster, margin) # calling a function
     simulated
   }
@@ -166,3 +186,5 @@ parallel_simulate_multiple_sequences <- function(data, cluster, n, seeds, margin
   stopCluster(cl)
   return(result)
 }
+
+

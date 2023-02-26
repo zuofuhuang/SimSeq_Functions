@@ -1,74 +1,18 @@
-# This version of Functions_start_with_clusters starts at 12am!
-# Need to create the distance matrix first at once, which can be computationally intensive.
-
-
-
-# When the user does not input their own clustering assignment
-# create_clusters <- function(distances, clust = "hclust", method = "average"){
-# if (clust != "hclust"){
-#   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
-# }
-
-#   hclust_real <- stats::hclust(as.dist(distances), method = method)
-#   dunn_index <- rep(0, 100) # The first one is Inf; we will denote as 0.
-#   for (i in 2:100){
-#     fit_real <- cutree(hclust_real, k = i)
-#     dunn_index[i] <- dunn(distance = distances, clusters = fit_real)
-#   }
-# 
-#   num <- which.max(dunn_index)
-#   final_cluster <- cutree(hclust_real, k = num)
-#   return(final_cluster) # need to suppress the warning
-# }
-
-
-
-# When the user does not input their own clustering assignment
-create_clusters_Dunn <- function(distances, clust = "hclust", method = "average"){
-  # if (clust != "hclust"){
-  #   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
-  # }
-  
-  hclust_real <- stats::hclust(as.dist(distances), method = method)
-  dunn_index <- matrix(0, nrow = 100, ncol = 8)
-  
-  for (i in 2:100){
-    fit_real <- cutree(hclust_real, k = i)
-    scatt <- cls.scatt.diss.mx(distances, fit_real)
-    dunn_index[i,] <- clv.Dunn(scatt, intracls = c("complete", "average"),
-                               intercls = c("single", "complete", "average", "hausdorff")) 
+sample_one <- function(samp){
+  if (length(samp) == 1){
+    return(samp)
+  } else {
+    return(sample(samp, 1))
   }
-  
-  num <- apply(dunn_index, 2, which.max)
-  final_cluster <- cutree(hclust_real, k = num[4])
-  return(final_cluster)
 }
 
-
-
-
-create_clusters_DB <- function(distances, clust = "hclust", method = "average"){
-  # if (clust != "hclust"){
-  #   warning("Other clustering methods are not supported. Please input your own clustering assignment or default to hierarchical clustering.")
-  # }
-  
-  hclust_real <- stats::hclust(as.dist(distances), method = method)
-  DB_index <- matrix(10, nrow = 100, ncol = 8)
-  
-  for (i in 2:100){
-    fit_real <- cutree(hclust_real, k = i)
-    scatt <- cls.scatt.diss.mx(distances, fit_real)
-    DB_index[i,] <- clv.Davies.Bouldin(scatt, intracls = c("complete", "average"),
-                                       intercls = c("single", "complete", "average", "hausdorff")) 
-  }
-  
-  num <- apply(DB_index, 2, which.min)
-  print(num)
-  final_cluster <- cutree(hclust_real, k = num[1])
-  return(final_cluster)
+KDE <- function(potential_durations){
+  # Used code from https://alfurka.github.io/2020-12-16-sampling-with-density-function/
+  dens <- density(potential_durations, from = 1, to = 1440)
+  cdf.estimate <- cumsum(dens$y) / cumsum(dens$y)[length(dens$y)]  
+  sampled <- dens$x[findInterval(runif(1), cdf.estimate)+1]
+  return(max(1,round(sampled)))
 }
-
-
 
 
 # Takes in a row of TraMineR sequence
@@ -178,10 +122,8 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
     filter(.[[1]] == starting_activity)
   # subsequences <- data.frame(t(apply(subset, 1, find_subsequence, activity = starting_activity, time = 1)))
   ends <- apply(subset, 1, end_of_first_activity)
+  right <- sample_one(ends) # Draw one end time randomly
   
-  # Draw one randomly
-  # right <- subsequences$X2[sample(1:nrow(subsequences),1)]
-  right <- sample(ends, 1)
   result[1:right] <- starting_activity
   right_activity <- starting_activity
 
@@ -190,23 +132,18 @@ simulate_one_sequence <- function(sequences, cluster, margin = 60){
     transitions <- unlist(apply(sequences, 1, activity_transition,
                                 time = right, activity = right_activity, from = TRUE, margin = margin))
     
-    if (is.null(transitions)){ # Nothing else to transform to
+    if (is.null(transitions)){ # Nothing else to transition to
       result[(right + 1) : min(right + margin, len)] <- right_activity
       right <- min(right + margin, len)
     } else {
-      # With KDE, need to sample an activity first
-      # Below is different from direct sampling (no KDE)
+      # With KDE, need to sample an activity first. Different from direct sampling (no KDE)
       activity <- names(transitions)[sample(1:length(transitions), size = 1)]
       potential_durations <- transitions[which(names(transitions) == activity)]
       
       if (length(unique(potential_durations)) == 1){
         dur <- potential_durations[1]
       } else {
-        # Used code from https://alfurka.github.io/2020-12-16-sampling-with-density-function/
-        dens <- density(potential_durations, from = 1, to = 1440)
-        cdf.estimate <- cumsum(dens$y) / cumsum(dens$y)[length(dens$y)]  
-        sampled <- dens$x[findInterval(runif(1), cdf.estimate)+1]
-        dur <- round(sampled)
+        dur <- KDE(potential_durations)
       }
 
       if (dur + right > len)  dur <- len - right
