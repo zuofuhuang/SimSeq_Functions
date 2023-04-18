@@ -1,12 +1,16 @@
 get_next_candidates <- function(sequences, time, activity){
   this <- sequences[,c(time, time+1)]
   this <- this[this[,1] == activity,]
-  return(as.vector(this[,2]))
+  # return(as.vector(this[,2]))
+  result <- as.vector(this[,2])
+  if (length(result) == 0){
+    return("N/A")
+  } else {
+    return(result)
+  }
 }
 
 
-# One problem with this is that there are more NAs toward the end of day, 
-# but it doesn't matter if we treat NA as a valid state itself
 impute_one_sequence <- function(start, sequences, window){
   imputed <- c(start,rep(NA, (window-1)))
   for (i in 1:(window-1)){
@@ -24,16 +28,26 @@ impute <- function(sequences, window){
 }
 
 
-set.seed(475)
-imputed <- impute(sequences, 60)
-imputed_seqs <- cbind(sequences, imputed)
-write.csv(imputed_seqs, "imputed_seqs.csv")
+# set.seed(475)
+# imputed <- impute(sequences, 60)
+# imputed_seqs <- cbind(sequences, imputed)
+# write.csv(imputed_seqs, "imputed_seqs.csv")
+# 
+# 
+# set.seed(477)
+# imputed_120 <- impute(sequences, 120)
+# imputed_seqs_120 <- cbind(sequences, imputed_120)
+# write.csv(imputed_seqs_120, "imputed_seqs_120.csv")
 
 
-set.seed(477)
-imputed_120 <- impute(sequences, 120)
-imputed_seqs_120 <- cbind(sequences, imputed_120)
+# set.seed(465)
+# imputed <- impute(sequences_work, 60)
+# imputed_seqs_work <- cbind(sequences_work, imputed)
+# write.csv(imputed_seqs_work, "imputed_seqs_work.csv")
 
-write.csv(imputed_seqs_120, "imputed_seqs_120.csv")
 
+# set.seed(460)
+# imputed2 <- impute(sequences, 60)
+# imputed_seqs_s4k5 <- cbind(sequences, imputed)
+# write.csv(imputed_seqs_s4k5, "imputed_seqs_s4k5.csv")
 

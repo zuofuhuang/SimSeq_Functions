@@ -14,8 +14,6 @@ library(clValid); library(clv); library(TraMineRextras); library(simukde)
 ```{r}
 # "baseline" sequence
 sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
-sequences[is.na(sequences)] <- "N/A"
-# imputed_seqs <- read.csv("../Data in use/imputed_seqs.csv")[,-1]
 ```
 
 
@@ -156,9 +154,15 @@ imputed_cluster_order2_120_T <- seqdef(imputed_cluster_order2_120)
 
 
 ```{r}
-sim_list <- list(sequences, cluster_TVMC, noCluster_TVMC, cluster, noCluster, cluster_order2, noCluster_order2, imputed_cluster, imputed_noCluster, imputed_cluster_order2, imputed_noCluster_order2, imputed_KDE_cluster, imputed_KDE_noCluster, imputed_KDE_cluster_order2, imputed_KDE_noCluster_order2, imputed_log_cluster, imputed_log_noCluster, imputed_log_cluster_order2, imputed_log_noCluster_order2)
+# sim_list <- list(sequences, cluster_TVMC, noCluster_TVMC, cluster, noCluster, cluster_order2, noCluster_order2, imputed_cluster, imputed_noCluster, imputed_cluster_order2, imputed_noCluster_order2, imputed_KDE_cluster, imputed_KDE_noCluster, imputed_KDE_cluster_order2, imputed_KDE_noCluster_order2, imputed_log_cluster, imputed_log_noCluster, imputed_log_cluster_order2, imputed_log_noCluster_order2)
 
-sim_list_T <- list(sequences_T, cluster_TVMC_T, noCluster_TVMC_T, cluster_T, noCluster_T, cluster_order2_T, noCluster_order2_T, imputed_cluster_T, imputed_noCluster_T, imputed_cluster_order2_T, imputed_noCluster_order2_T, imputed_KDE_cluster_T, imputed_KDE_noCluster_T, imputed_KDE_cluster_order2_T, imputed_KDE_noCluster_order2_T, imputed_log_cluster_T, imputed_log_noCluster_T, imputed_log_cluster_order2_T, imputed_log_noCluster_order2_T)
+# sim_list_T <- list(sequences_T, cluster_TVMC_T, noCluster_TVMC_T, cluster_T, noCluster_T, cluster_order2_T, noCluster_order2_T, imputed_cluster_T, imputed_noCluster_T, imputed_cluster_order2_T, imputed_noCluster_order2_T, imputed_KDE_cluster_T, imputed_KDE_noCluster_T, imputed_KDE_cluster_order2_T, imputed_KDE_noCluster_order2_T, imputed_log_cluster_T, imputed_log_noCluster_T, imputed_log_cluster_order2_T, imputed_log_noCluster_order2_T)
+```
+
+```{r}
+# sim_list <- list(sequences, cluster_TVMC, noCluster_TVMC, imputed_cluster, imputed_noCluster, imputed_cluster_order2, imputed_noCluster_order2)
+# 
+# sim_list_T <- list(sequences_T, cluster_TVMC_T, noCluster_TVMC_T, imputed_cluster_T, imputed_noCluster_T, imputed_cluster_order2_T, imputed_noCluster_order2_T)
 ```
 
 ```{r}
@@ -177,9 +181,9 @@ sim_list_window_T <- list(sequences_T, imputed_cluster_T, imputed_cluster_order2
 # sequences[sequences == "N/A"] <- NA
 # p_sequences <- seqplot(seqdef(sequences), border = NA, type = "d", cex.legend = 0.5)
 
-this <- as.data.frame(sim_list[[1]])
-this[this == "N/A"] <- NA
-seqplot(seqdef(this), border = NA, type = "d", cex.legend = 0.5)
+# this <- as.data.frame(sim_list[[1]])
+# this[this == "N/A"] <- NA
+# seqplot(seqdef(this), border = NA, type = "d", cex.legend = 0.5)
 ```
 
 
@@ -187,7 +191,7 @@ seqplot(seqdef(this), border = NA, type = "d", cex.legend = 0.5)
 
 ```{r}
 ### Example:
-a_sequences <- seqmeant(sequences_T)
+# a_sequences <- seqmeant(sequences_T)
 ```
 
 
@@ -296,22 +300,22 @@ sum_of_state_pct <- function(ref, data){
 ## Transition Matrix?
 
 ```{r}
-tm1 <- seqtrate(sequences_T)
-tm6 <- seqtrate(sim_seqs_cluster_TVMC_T)
-tm7 <- seqtrate(sim_seqs_noCluster_TVMC_T)
-tm8 <- seqtrate(sim_seqs_imputed_cluster_T)
-tm9 <- seqtrate(sim_seqs_imputed_noCluster_T)
-tm10 <- seqtrate(sim_seqs_imputed_cluster_order2_T)
-tm11 <- seqtrate(sim_seqs_imputed_noCluster_order2_T)
+# tm1 <- seqtrate(sequences_T)
+# tm6 <- seqtrate(sim_seqs_cluster_TVMC_T)
+# tm7 <- seqtrate(sim_seqs_noCluster_TVMC_T)
+# tm8 <- seqtrate(sim_seqs_imputed_cluster_T)
+# tm9 <- seqtrate(sim_seqs_imputed_noCluster_T)
+# tm10 <- seqtrate(sim_seqs_imputed_cluster_order2_T)
+# tm11 <- seqtrate(sim_seqs_imputed_noCluster_order2_T)
 ```
 
 ```{r}
-heatmap(tm1 - tm6, Rowv = NA, Colv = NA)
-heatmap(tm1 - tm7, Rowv = NA, Colv = NA)
-heatmap(tm1 - tm8, Rowv = NA, Colv = NA)
-heatmap(tm1 - tm9, Rowv = NA, Colv = NA)
-heatmap(tm1 - tm10, Rowv = NA, Colv = NA)
-heatmap(tm1 - tm11, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm6, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm7, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm8, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm9, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm10, Rowv = NA, Colv = NA)
+# heatmap(tm1 - tm11, Rowv = NA, Colv = NA)
 ```
 
 
@@ -358,36 +362,280 @@ heatmap(tm1 - tm11, Rowv = NA, Colv = NA)
 
 
 
-# Working playground
+<!-- # Main comparisons -->
 
-Evaluation criteria: 
+<!-- Evaluation criteria: -->
 
-1. Transition matrix and heatmap? (TO BE DEVELOPED)
+<!-- 1. Transition matrix and heatmap? (TO BE DEVELOPED) -->
 
-2. Distribution of state durations (Mean and SD of each activity)
+<!-- 2. Distribution of state durations (Mean and SD of each activity) -->
 
-3. Distribution of number of distinct states (Mean and SD)
+<!-- 3. Distribution of number of distinct states (Mean and SD) -->
 
-4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+<!-- 4. Distribution of entropies (and K-S test statistic p-value against original sequences) -->
 
-5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
+<!-- 5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences) -->
+
+
+
+
+<!-- 2. Distribution of state durations (Mean and SD of each activity) -->
+
+<!-- ```{r} -->
+<!-- this <- lapply(sim_list_T, dist_of_activity_dur) -->
+<!-- means <- as.matrix(sapply(this,"[[", 1)) -->
+<!-- means_prop <- means -->
+
+<!-- for (i in 2:7){ -->
+<!--   for (j in 1:13){ -->
+<!--     means_prop[j,i] <- paste0(round((means[j,i]/means[j,1] - 1) * 100,1), "%") -->
+<!--   } -->
+<!-- } -->
+<!-- means <- round(means, 2) -->
+<!-- means_prop[,1] <- round(as.vector(as.numeric((means_prop[,1]), 2)), 2) -->
+
+
+
+<!-- sds <- as.matrix(sapply(this,"[[", 2)) -->
+<!-- sds_prop <- sds -->
+
+<!-- for (i in 2:7){ -->
+<!--   for (j in 1:13){ -->
+<!--     sds_prop[j,i] <- paste0(round((sds[j,i]/sds[j,1] - 1) * 100,1), "%") -->
+<!--   } -->
+<!-- } -->
+<!-- sds <- round(sds, 2) -->
+<!-- sds_prop[,1] <- round(as.vector(as.numeric((sds_prop[,1]), 2)), 2) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # result <- means -->
+<!-- #  -->
+<!-- # for(i in 1:nrow(means)){ -->
+<!-- #   for (j in 1:ncol(means)){ -->
+<!-- #     result[i,j] <- paste0(means[i,j], " (", sds[i,j],")") -->
+<!-- #   } -->
+<!-- # } -->
+<!-- ``` -->
+
+
+
+<!-- 3. Distribution of number of distinct states (Mean and SD) -->
+
+<!-- ```{r} -->
+<!-- dists <- lapply(sim_list_T, num_of_distinct_states) -->
+
+<!-- means <- sapply(dists, mean) -->
+<!-- round(means, 2) -->
+<!-- sds <- sapply(dists, sd) -->
+<!-- round(sds, 2) -->
+<!-- ``` -->
+
+
+<!-- 4. Distribution of entropies (and K-S test statistic p-value against original sequences) -->
+
+<!-- ```{r} -->
+<!-- entropies <- lapply(sim_list_T, TraMineR::seqient) -->
+
+<!-- pvalues <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues <- c(pvalues, ks.test(entropies[[1]], entropies[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # Consider plots -->
+<!-- entropy_dat <- as.data.frame(cbind(c(entropies[[1]], entropies[[2]], entropies[[3]], entropies[[4]], entropies[[5]], entropies[[6]], entropies[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(entropy_dat) <- c("Length", "Method", "Clustered") -->
+<!-- entropy_dat$Length <- as.numeric(entropy_dat$Length) -->
+<!-- entropy_dat$Method <- factor(entropy_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+
+<!-- ggplot(data = entropy_dat, aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 0.02) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+<!-- ## 5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences) -->
+
+<!-- ### **WORK** -->
+
+<!-- ```{r} -->
+<!-- dists <- lapply(sim_list_T, length_of_certain_activity, activity = "WORK") -->
+
+<!-- pvalues_work <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues_work <- c(pvalues_work, ks.test(dists[[1]], dists[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues_work -->
+
+<!-- work_dist_dat <- as.data.frame(cbind(c(dists[[1]], dists[[2]], dists[[3]], dists[[4]], dists[[5]], dists[[6]], dists[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(work_dist_dat) <- c("Length", "Method", "Clustered") -->
+<!-- work_dist_dat$Length <- as.numeric(work_dist_dat$Length) -->
+<!-- work_dist_dat$Method <- factor(work_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+
+<!-- ggplot(data = work_dist_dat, aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 30) + -->
+<!--   theme_bw() -->
+
+<!-- ggplot(data = work_dist_dat[work_dist_dat$Length != 0,], aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 30) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+
+
+<!-- ### **HOME** -->
+
+<!-- ```{r} -->
+<!-- dists_home <- lapply(sim_list_T, length_of_certain_activity, activity = "HOME") -->
+
+<!-- pvalues_home <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues_home <- c(pvalues_home, ks.test(dists_home[[1]], dists_home[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues_home -->
+
+<!-- home_dist_dat <- as.data.frame(cbind(c(dists_home[[1]], dists_home[[2]], dists_home[[3]], dists_home[[4]], dists_home[[5]], dists_home[[6]], dists_home[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(home_dist_dat) <- c("Length", "Method", "Clustered") -->
+<!-- home_dist_dat$Length <- as.numeric(home_dist_dat$Length) -->
+<!-- home_dist_dat$Method <- factor(home_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+
+<!-- ggplot(data = home_dist_dat, aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 30) + -->
+<!--   theme_bw() -->
+
+<!-- ggplot(data = home_dist_dat[home_dist_dat$Length != 1440,], aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 30) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+
+<!-- ### **car** -->
+
+<!-- ```{r} -->
+<!-- dists_car <- lapply(sim_list_T, length_of_certain_activity, activity = "CAR") -->
+
+<!-- pvalues_car <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues_car <- c(pvalues_car, ks.test(dists_car[[1]], dists_car[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues_car -->
+
+<!-- car_dist_dat <- as.data.frame(cbind(c(dists_car[[1]], dists_car[[2]], dists_car[[3]], dists_car[[4]], dists_car[[5]], dists_car[[6]], dists_car[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(car_dist_dat) <- c("Length", "Method", "Clustered") -->
+<!-- car_dist_dat$Length <- as.numeric(car_dist_dat$Length) -->
+<!-- car_dist_dat$Method <- factor(car_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+
+<!-- ggplot(data = car_dist_dat, aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 5) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+<!-- ### **Leisure and recreation** -->
+
+<!-- ```{r} -->
+<!-- dists_LR <- lapply(sim_list_T, length_of_certain_activity, activity = "LEISURE_RECREATION") -->
+
+<!-- pvalues_LR <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues_LR <- c(pvalues_LR, ks.test(dists_LR[[1]], dists_LR[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues_LR -->
+
+<!-- LR_dist_dat <- as.data.frame(cbind(c(dists_LR[[1]], dists_LR[[2]], dists_LR[[3]], dists_LR[[4]], dists_LR[[5]], dists_LR[[6]], dists_LR[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(LR_dist_dat) <- c("Length", "Method", "Clustered") -->
+<!-- LR_dist_dat$Length <- as.numeric(LR_dist_dat$Length) -->
+<!-- LR_dist_dat$Method <- factor(LR_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+<!-- # -->
+<!-- # ggplot(data = LR_dist_dat, aes(x = Length)) + -->
+<!-- #   facet_grid(Clustered ~ Method) + -->
+<!-- #   geom_histogram(binwidth = 30) + -->
+<!-- #   theme_bw() -->
+
+<!-- ggplot(data = LR_dist_dat[LR_dist_dat$Length != 0,], aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 20) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+<!-- ### **Personal Business** -->
+
+
+<!-- ```{r} -->
+<!-- dists_PB <- lapply(sim_list_T, length_of_certain_activity, activity = "PERSONAL_BUSINESS") -->
+
+<!-- pvalues_PB <- c() -->
+<!-- for (i in 2:7){ -->
+<!--   pvalues_PB <- c(pvalues_PB, ks.test(dists_PB[[1]], dists_PB[[i]])$p.value) -->
+<!-- } -->
+
+<!-- pvalues_PB -->
+
+<!-- PB_dist_dat <- as.data.frame(cbind(c(dists_PB[[1]], dists_PB[[2]], dists_PB[[3]], dists_PB[[4]], dists_PB[[5]], dists_PB[[6]], dists_PB[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929)))) -->
+
+<!-- colnames(PB_dist_dat) <- c("Length", "Method", "Clustered") -->
+<!-- PB_dist_dat$Length <- as.numeric(PB_dist_dat$Length) -->
+<!-- PB_dist_dat$Method <- factor(PB_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2")) -->
+
+<!-- ggplot(data = PB_dist_dat[PB_dist_dat$Length != 0,], aes(x = Length)) + -->
+<!--   facet_grid(Clustered ~ Method) + -->
+<!--   geom_histogram(binwidth = 20) + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+
+
+<!-- ## Others: -->
+
+<!-- Sum of percentage of each state at each time squared -->
+
+<!-- ```{r} -->
+<!-- sapply(sim_list_T, sum_of_state_pct, ref = sequences_T) -->
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+<!-- num_distinct_periods_perday(sim_list_T[[19]], "WORK") -->
+<!-- ``` -->
+
+
+
+
+
+# Time window
+
+## 2. Distribution of state durations (Mean and SD of each activity)
 
 
 ```{r}
-# for (i in 1:length(sim_list_T)){
-#   print(sum(is.na(sim_list_T[[i]])))
-# }
-```
-
-
-2. Distribution of state durations (Mean and SD of each activity)
-
-```{r}
-this <- lapply(sim_list_T, dist_of_activity_dur)
+this <- lapply(sim_list_window_T, dist_of_activity_dur)
 means <- as.matrix(sapply(this,"[[", 1))
 means_prop <- means
 
-for (i in 2:19){
+for (i in 2:7){
   for (j in 1:13){
     means_prop[j,i] <- paste0(round((means[j,i]/means[j,1] - 1) * 100,1), "%")
   }
@@ -400,7 +648,7 @@ means_prop[,1] <- round(as.vector(as.numeric((means_prop[,1]), 2)), 2)
 sds <- as.matrix(sapply(this,"[[", 2))
 sds_prop <- sds
 
-for (i in 2:19){
+for (i in 2:7){
   for (j in 1:13){
     sds_prop[j,i] <- paste0(round((sds[j,i]/sds[j,1] - 1) * 100,1), "%")
   }
@@ -409,24 +657,12 @@ sds <- round(sds, 2)
 sds_prop[,1] <- round(as.vector(as.numeric((sds_prop[,1]), 2)), 2)
 ```
 
-```{r}
-result <- la
-
-for(i in 1:nrow(la)){
-  for (j in 1:ncol(la)){
-    result[i,j] <- paste0(la[i,j], " (", la_sd[i,j],")")
-  }
-}
-
-write.csv(data.frame(result),"result.csv")
-```
 
 
-
-3. Distribution of number of distinct states (Mean and SD)
+## 3. Distribution of number of distinct states (Mean and SD)
 
 ```{r}
-dists <- lapply(sim_list_T, num_of_distinct_states)
+dists <- lapply(sim_list_window_T, num_of_distinct_states)
 
 means <- sapply(dists, mean)
 round(means, 2)
@@ -435,29 +671,29 @@ round(sds, 2)
 ```
 
 
-4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+## 4. Distribution of entropies (and K-S test statistic p-value against original sequences)
 
 ```{r}
-entropies <- lapply(sim_list_T, TraMineR::seqient)
+entropies <- lapply(sim_list_window_T, TraMineR::seqient)
 
 pvalues <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues <- c(pvalues, ks.test(entropies[[1]], entropies[[i]])$p.value)
 }
 
-# pvalues
+pvalues
 ```
 
 ```{r}
 # Consider plots
-entropy_dat <- as.data.frame(cbind(c(entropies[[1]], entropies[[2]], entropies[[3]], entropies[[8]], entropies[[9]], entropies[[10]], entropies[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+entropy_dat <- as.data.frame(cbind(c(entropies[[1]], entropies[[2]], entropies[[3]], entropies[[4]], entropies[[5]], entropies[[6]], entropies[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(entropy_dat) <- c("Length", "Method", "Clustered")
+colnames(entropy_dat) <- c("Length", "Time_window", "Order")
 entropy_dat$Length <- as.numeric(entropy_dat$Length)
-entropy_dat$Method <- factor(entropy_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+entropy_dat$Time_window <- factor(entropy_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
 
 ggplot(data = entropy_dat, aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 0.02) +
   theme_bw()
 ```
@@ -468,161 +704,165 @@ ggplot(data = entropy_dat, aes(x = Length)) +
 ### **WORK**
 
 ```{r}
-dists <- lapply(sim_list_T, length_of_certain_activity, activity = "WORK")
+dists <- lapply(sim_list_window_T, length_of_certain_activity, activity = "WORK")
 
 pvalues_work <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues_work <- c(pvalues_work, ks.test(dists[[1]], dists[[i]])$p.value)
 }
 
-# pvalues_work
+pvalues_work
 
-work_dist_dat <- as.data.frame(cbind(c(dists[[1]], dists[[2]], dists[[3]], dists[[8]], dists[[9]], dists[[10]], dists[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+work_dist_dat <- as.data.frame(cbind(c(dists[[1]], dists[[2]], dists[[3]], dists[[4]], dists[[5]], dists[[6]], dists[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(work_dist_dat) <- c("Length", "Method", "Clustered")
+colnames(work_dist_dat) <- c("Length", "Time_window", "Order")
 work_dist_dat$Length <- as.numeric(work_dist_dat$Length)
-work_dist_dat$Method <- factor(work_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+work_dist_dat$Time_window <- factor(work_dist_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
 
 ggplot(data = work_dist_dat, aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 30) +
   theme_bw()
 
 ggplot(data = work_dist_dat[work_dist_dat$Length != 0,], aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 30) +
   theme_bw()
 ```
-
-
 
 
 ### **HOME**
 
 ```{r}
-dists_home <- lapply(sim_list_T, length_of_certain_activity, activity = "HOME")
+dists_home <- lapply(sim_list_window_T, length_of_certain_activity, activity = "HOME")
 
 pvalues_home <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues_home <- c(pvalues_home, ks.test(dists_home[[1]], dists_home[[i]])$p.value)
 }
 
-# pvalues_home
+pvalues_home
 
-home_dist_dat <- as.data.frame(cbind(c(dists_home[[1]], dists_home[[2]], dists_home[[3]], dists_home[[8]], dists_home[[9]], dists_home[[10]], dists_home[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+home_dist_dat <- as.data.frame(cbind(c(dists_home[[1]], dists_home[[2]], dists_home[[3]], dists_home[[4]], dists_home[[5]], dists_home[[6]], dists_home[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(home_dist_dat) <- c("Length", "Method", "Clustered")
+colnames(home_dist_dat) <- c("Length", "Time_window", "Order")
 home_dist_dat$Length <- as.numeric(home_dist_dat$Length)
-home_dist_dat$Method <- factor(home_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+home_dist_dat$Time_window <- factor(home_dist_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
 
 ggplot(data = home_dist_dat, aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 30) +
   theme_bw()
 
 ggplot(data = home_dist_dat[home_dist_dat$Length != 1440,], aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 30) +
   theme_bw()
 ```
+
 
 
 
 ### **CAR**
 
 ```{r}
-dists_car <- lapply(sim_list_T, length_of_certain_activity, activity = "CAR")
+dists_car <- lapply(sim_list_window_T, length_of_certain_activity, activity = "CAR")
 
 pvalues_car <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues_car <- c(pvalues_car, ks.test(dists_car[[1]], dists_car[[i]])$p.value)
 }
 
 pvalues_car
 
-car_dist_dat <- as.data.frame(cbind(c(dists_car[[1]], dists_car[[2]], dists_car[[3]], dists_car[[8]], dists_car[[9]], dists_car[[10]], dists_car[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+car_dist_dat <- as.data.frame(cbind(c(dists_car[[1]], dists_car[[2]], dists_car[[3]], dists_car[[4]], dists_car[[5]], dists_car[[6]], dists_car[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(car_dist_dat) <- c("Length", "Method", "Clustered")
+colnames(car_dist_dat) <- c("Length", "Time_window", "Order")
 car_dist_dat$Length <- as.numeric(car_dist_dat$Length)
-car_dist_dat$Method <- factor(car_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+car_dist_dat$Time_window <- factor(car_dist_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
 
 ggplot(data = car_dist_dat, aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 5) +
   theme_bw()
+
+# ggplot(data = car_dist_dat[car_dist_dat$Length < 300,], aes(x = Length)) +
+#   facet_grid(Order ~ Time_window) +
+#   geom_histogram(binwidth = 5) +
+#   theme_bw()
 ```
 
 
-### **Leisure and recreation**
+
+### **LEISURE_RECREATION**
 
 ```{r}
-dists_LR <- lapply(sim_list_T, length_of_certain_activity, activity = "LEISURE_RECREATION")
+dists_LR <- lapply(sim_list_window_T, length_of_certain_activity, activity = "LEISURE_RECREATION")
 
 pvalues_LR <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues_LR <- c(pvalues_LR, ks.test(dists_LR[[1]], dists_LR[[i]])$p.value)
 }
 
 pvalues_LR
 
-LR_dist_dat <- as.data.frame(cbind(c(dists_LR[[1]], dists_LR[[2]], dists_LR[[3]], dists_LR[[8]], dists_LR[[9]], dists_LR[[10]], dists_LR[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+LR_dist_dat <- as.data.frame(cbind(c(dists_LR[[1]], dists_LR[[2]], dists_LR[[3]], dists_LR[[4]], dists_LR[[5]], dists_LR[[6]], dists_LR[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(LR_dist_dat) <- c("Length", "Method", "Clustered")
+colnames(LR_dist_dat) <- c("Length", "Time_window", "Order")
 LR_dist_dat$Length <- as.numeric(LR_dist_dat$Length)
-LR_dist_dat$Method <- factor(LR_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
-# 
+LR_dist_dat$Time_window <- factor(LR_dist_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
+
 # ggplot(data = LR_dist_dat, aes(x = Length)) +
-#   facet_grid(Clustered ~ Method) +
-#   geom_histogram(binwidth = 30) +
+#   facet_grid(Order ~ Time_window) +
+#   geom_histogram(binwidth = 20) +
 #   theme_bw()
 
 ggplot(data = LR_dist_dat[LR_dist_dat$Length != 0,], aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 20) +
   theme_bw()
 ```
 
 
-### **Personal Business**
-
+### **PERSONAL_BUSINESS**
 
 ```{r}
-dists_PB <- lapply(sim_list_T, length_of_certain_activity, activity = "PERSONAL_BUSINESS")
+dists_PB <- lapply(sim_list_window_T, length_of_certain_activity, activity = "PERSONAL_BUSINESS")
 
 pvalues_PB <- c()
-for (i in 2:19){
+for (i in 2:7){
   pvalues_PB <- c(pvalues_PB, ks.test(dists_PB[[1]], dists_PB[[i]])$p.value)
 }
 
 pvalues_PB
 
-PB_dist_dat <- as.data.frame(cbind(c(dists_PB[[1]], dists_PB[[2]], dists_PB[[3]], dists_PB[[8]], dists_PB[[9]], dists_PB[[10]], dists_PB[[11]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+PB_dist_dat <- as.data.frame(cbind(c(dists_PB[[1]], dists_PB[[2]], dists_PB[[3]], dists_PB[[4]], dists_PB[[5]], dists_PB[[6]], dists_PB[[7]]), c(rep("Original data",1929),rep("60 min",1929*2), rep("30 min",1929*2), rep("120 min", 1929*2)), c(rep("Order 1", 1929), rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929),rep("Order 1",1929),rep("Order 2",1929))))
 
-colnames(PB_dist_dat) <- c("Length", "Method", "Clustered")
+colnames(PB_dist_dat) <- c("Length", "Time_window", "Order")
 PB_dist_dat$Length <- as.numeric(PB_dist_dat$Length)
-PB_dist_dat$Method <- factor(PB_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+PB_dist_dat$Time_window <- factor(PB_dist_dat$Time_window, levels = c("Original data","60 min","30 min", "120 min"))
+
+# ggplot(data = PB_dist_dat, aes(x = Length)) +
+#   facet_grid(Order ~ Time_window) +
+#   geom_histogram(binwidth = 30) +
+#   theme_bw()
 
 ggplot(data = PB_dist_dat[PB_dist_dat$Length != 0,], aes(x = Length)) +
-  facet_grid(Clustered ~ Method) +
+  facet_grid(Order ~ Time_window) +
   geom_histogram(binwidth = 20) +
   theme_bw()
 ```
 
-
-
-Others: 
+## Others:
 
 Sum of percentage of each state at each time squared
 
 ```{r}
-sapply(sim_list_T, sum_of_state_pct, ref = sequences_T)
+sapply(sim_list_window_T, sum_of_state_pct, ref = sequences_T)
 ```
-
 
 
 ```{r}
-num_distinct_periods_perday(sim_list_T[[19]], "WORK")
+num_distinct_periods_perday(sim_list_window_T[[1]], "WORK")
 ```
-
-
 
