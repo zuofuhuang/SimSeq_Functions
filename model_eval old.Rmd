@@ -1,0 +1,393 @@
+---
+title: "Cluster assignment related attempts"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(TraMineR)
+library(performance)
+library(GLMMadaptive)
+library(pscl)
+library(rbenchmark)
+library(foreach)
+library(doParallel)
+library(gridExtra)
+library(fastcluster)
+library(MASS)
+library(clValid)
+library(clv)
+library(TraMineRextras)
+library(simukde)
+```
+
+
+```{r}
+sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
+sequences[is.na(sequences)] <- "N/A"
+imputed_seqs <- read.csv("../Data in use/imputed_seqs.csv")[,-1]
+
+sim_seqs_cluster <- read.csv("../Data in use/sim_seqs_cluster.csv")[,-1]
+sim_seqs_noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
+
+sim_seqs_cluster_order2 <- read.csv("../Data in use/sim_seqs_cluster_order2.csv")[,-1]
+sim_seqs_noCluster_order2 <- read.csv("../Data in use/sim_seqs_noCluster_order2.csv")[,-1]
+
+sim_seqs_cluster_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+sim_seqs_noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+
+sim_seqs_imputed_cluster <- read.csv("../Data in use/sim_seqs_imputed_cluster.csv")[,2:1441]
+sim_seqs_imputed_noCluster <- read.csv("../Data in use/sim_seqs_imputed_noCluster.csv")[,2:1441]
+
+sim_seqs_imputed_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_cluster_order2.csv")[,2:1441]
+sim_seqs_imputed_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_order2.csv")[,2:1441]
+```
+
+
+## Distribution plots
+
+```{r message=FALSE}
+# sequences[sequences == "N/A"] <- NA
+# p1 <- seqplot(seqdef(sequences), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster[sim_seqs_cluster == "N/A"] <- NA
+# p2 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster[sim_seqs_noCluster == "N/A"] <- NA
+# p3 <- seqplot(seqdef(sim_seqs_noCluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster_order2[sim_seqs_cluster_order2 == "N/A"] <- NA
+# p4 <- seqplot(seqdef(sim_seqs_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster_order2[sim_seqs_noCluster_order2 == "N/A"] <- NA
+# p5 <- seqplot(seqdef(sim_seqs_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_cluster_TVMC[sim_seqs_cluster_TVMC == "N/A"] <- NA
+# p6 <- seqplot(seqdef(sim_seqs_cluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_noCluster_TVMC[sim_seqs_noCluster_TVMC == "N/A"] <- NA
+# p7 <- seqplot(seqdef(sim_seqs_noCluster_TVMC), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_cluster[sim_seqs_imputed_cluster == "N/A"] <- NA
+# p8 <- seqplot(seqdef(sim_seqs_imputed_cluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_noCluster[sim_seqs_imputed_noCluster == "N/A"] <- NA
+# p9 <- seqplot(seqdef(sim_seqs_imputed_noCluster), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_cluster_order2[sim_seqs_imputed_cluster_order2 == "N/A"] <- NA
+# p10 <- seqplot(seqdef(sim_seqs_imputed_cluster_order2), border = NA, type = "d", cex.legend = 0.5)
+# 
+# sim_seqs_imputed_noCluster_order2[sim_seqs_imputed_noCluster_order2 == "N/A"] <- NA
+# p11 <- seqplot(seqdef(sim_seqs_imputed_noCluster_order2), border = NA, type = "d", cex.legend = 0.5)
+```
+
+```{r message=FALSE}
+sequences_T <- seqdef(sequences)
+
+sim_seqs_cluster_T <- seqdef(sim_seqs_cluster)
+sim_seqs_noCluster_T <- seqdef(sim_seqs_noCluster)
+
+sim_seqs_cluster_order2_T <- seqdef(sim_seqs_cluster_order2)
+sim_seqs_noCluster_order2_T <- seqdef(sim_seqs_noCluster_order2)
+
+sim_seqs_cluster_TVMC_T <- seqdef(sim_seqs_cluster_TVMC)
+sim_seqs_noCluster_TVMC_T <- seqdef(sim_seqs_noCluster_TVMC)
+
+sim_seqs_imputed_cluster_T <- seqdef(sim_seqs_imputed_cluster)
+sim_seqs_imputed_noCluster_T <- seqdef(sim_seqs_imputed_noCluster)
+
+sim_seqs_imputed_cluster_order2_T <- seqdef(sim_seqs_imputed_cluster_order2)
+sim_seqs_imputed_noCluster_order2_T <- seqdef(sim_seqs_imputed_noCluster_order2)
+```
+
+## Percentage of each activity
+
+```{r}
+a1 <- seqmeant(sequences_T)
+a2 <- seqmeant(sim_seqs_cluster_T)
+a3 <- seqmeant(sim_seqs_noCluster_T)
+a4 <- seqmeant(sim_seqs_cluster_order2_T)
+a5 <- seqmeant(sim_seqs_noCluster_order2_T)
+a6 <- seqmeant(sim_seqs_cluster_TVMC_T)
+a7 <- seqmeant(sim_seqs_noCluster_TVMC_T)
+a8 <- seqmeant(sim_seqs_imputed_cluster_T)
+a9 <- seqmeant(sim_seqs_imputed_noCluster_T)
+a10 <- seqmeant(sim_seqs_imputed_cluster_order2_T)
+a11 <- seqmeant(sim_seqs_imputed_noCluster_order2_T)
+
+cbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
+```
+
+
+## Distribution of duration of each activity
+
+```{r}
+dist1 <- seqistatd(sequences_T)
+c1 <- apply(dist1, 2, mean)
+d1 <- apply(dist1, 2, sd)
+dist2 <- seqistatd(sim_seqs_cluster_T)
+c2 <- apply(dist2, 2, mean)
+d2 <- apply(dist2, 2, sd)
+dist3 <- seqistatd(sim_seqs_noCluster_T)
+c3 <- apply(dist3, 2, mean)
+d3 <- apply(dist3, 2, sd)
+dist4 <- seqistatd(sim_seqs_cluster_order2_T)
+c4 <- apply(dist4, 2, mean)
+d4 <- apply(dist4, 2, sd)
+dist5 <- seqistatd(sim_seqs_noCluster_order2_T)
+c5 <- apply(dist5, 2, mean)
+d5 <- apply(dist5, 2, sd)
+dist6 <- seqistatd(sim_seqs_cluster_TVMC_T)
+c6 <- apply(dist6, 2, mean)
+d6 <- apply(dist6, 2, sd)
+dist7 <- seqistatd(sim_seqs_noCluster_TVMC_T)
+c7 <- apply(dist7, 2, mean)
+d7 <- apply(dist7, 2, sd)
+dist8 <- seqistatd(sim_seqs_imputed_cluster_T)
+c8 <- apply(dist8, 2, mean)
+d8 <- apply(dist8, 2, sd)
+dist9 <- seqistatd(sim_seqs_imputed_noCluster_T)
+c9 <- apply(dist9, 2, mean)
+d9 <- apply(dist9, 2, sd)
+dist10 <- seqistatd(sim_seqs_imputed_cluster_order2_T)
+c10 <- apply(dist10, 2, mean)
+d10 <- apply(dist10, 2, sd)
+dist11 <- seqistatd(sim_seqs_imputed_noCluster_order2_T)
+c11 <- apply(dist11, 2, mean)
+d11 <- apply(dist11, 2, sd)
+```
+
+```{r}
+cbind(c1, c6, c7, c8, c9, c10, c11)
+cbind(d1, d6, d7, d8, d9, d10, d11)
+```
+
+
+## The distribution of number of distinct states in each sequence
+
+```{r}
+b1 <- seqlength(seqdss(sequences_T))
+b2 <- seqlength(seqdss(sim_seqs_cluster_T))
+b3 <- seqlength(seqdss(sim_seqs_noCluster_T))
+b4 <- seqlength(seqdss(sim_seqs_cluster_order2_T))
+b5 <- seqlength(seqdss(sim_seqs_noCluster_order2_T))
+b6 <- seqlength(seqdss(sim_seqs_cluster_TVMC_T))
+b7 <- seqlength(seqdss(sim_seqs_noCluster_TVMC_T))
+b8 <- seqlength(seqdss(sim_seqs_imputed_cluster_T))
+b9 <- seqlength(seqdss(sim_seqs_imputed_noCluster_T))
+b10 <- seqlength(seqdss(sim_seqs_imputed_cluster_order2_T))
+b11 <- seqlength(seqdss(sim_seqs_imputed_noCluster_order2_T))
+```
+
+Means: 10.1, 10.8, 11.0, 10.8, 10.6, 10.2, 10.2, 10.0, 10.0, 10.2, 10.0
+
+SDs: 8.8, 6.9, 6.6, 7.1, 6.5, 5.8, 5.5, 6.6, 6.2, 6.6, 6.4
+
+TVMC performs better with respect to the mean, but worse with respect to standard deviation.
+
+
+## How much work does each day have?
+
+```{r}
+work1 <- dist1[,"WORK"]
+work2 <- dist2[,"WORK"]
+work3 <- dist3[,"WORK"]
+work4 <- dist4[,"WORK"]
+work5 <- dist5[,"WORK"]
+work6 <- dist6[,"WORK"]
+work7 <- dist7[,"WORK"]
+work8 <- dist8[,"WORK"]
+work9 <- dist9[,"WORK"]
+work10 <- dist10[,"WORK"]
+work11 <- dist11[,"WORK"]
+```
+
+
+```{r}
+dat <- as.data.frame(cbind(c(work1, work6, work7, work8, work9, work10, work11), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Our Method",1929*2), rep("Our Method + order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(dat) <- c("Length", "Method","Clustered")
+dat$Length <- as.numeric(dat$Length)
+```
+
+```{r}
+ggplot(data = dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 50) +
+  theme_bw()
+```
+
+Maybe if the clustering idea is good, we can think of adding the individual level through clustering as well.
+
+
+## Number of distinct work periods per day
+
+```{r}
+work_num1 <- table(rowSums(seqdss(sequences_T) == "WORK"))
+work_num2 <- table(rowSums(seqdss(sim_seqs_cluster_T) == "WORK"))
+work_num3 <- table(rowSums(seqdss(sim_seqs_noCluster_T) == "WORK"))
+work_num4 <- table(rowSums(seqdss(sim_seqs_cluster_order2_T) == "WORK"))
+work_num5 <- table(rowSums(seqdss(sim_seqs_noCluster_order2_T) == "WORK"))
+work_num6 <- table(rowSums(seqdss(sim_seqs_cluster_TVMC_T) == "WORK"))
+work_num7 <- table(rowSums(seqdss(sim_seqs_noCluster_TVMC_T) == "WORK"))
+work_num8 <- table(rowSums(seqdss(sim_seqs_imputed_cluster_T) == "WORK"))
+work_num9 <- table(rowSums(seqdss(sim_seqs_imputed_noCluster_T) == "WORK"))
+work_num10 <- table(rowSums(seqdss(sim_seqs_imputed_cluster_order2_T) == "WORK"))
+work_num11 <- table(rowSums(seqdss(sim_seqs_imputed_noCluster_order2_T) == "WORK"))
+```
+
+
+## How much home does each day have?
+
+```{r}
+home1 <- dist1[,"HOME"]
+home2 <- dist2[,"HOME"]
+home3 <- dist3[,"HOME"]
+home4 <- dist4[,"HOME"]
+home5 <- dist5[,"HOME"]
+home6 <- dist6[,"HOME"]
+home7 <- dist7[,"HOME"]
+home8 <- dist8[,"HOME"]
+home9 <- dist9[,"HOME"]
+home10 <- dist10[,"HOME"]
+home11 <- dist11[,"HOME"]
+```
+
+```{r}
+dat_home <- as.data.frame(cbind(c(home1, home6, home7, home8, home9, home10, home11), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Our Method",1929*2), rep("Our Method + order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(dat_home) <- c("Length", "Method","Clustered")
+dat_home$Length <- as.numeric(dat_home$Length)
+```
+
+```{r}
+ggplot(data = dat_home, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 50) +
+  theme_bw()
+```
+
+## Sum of percentage of each state squared
+
+```{r}
+# ref and data are traminer objects
+sum_of_state_pct <- function(ref, data){
+  ref_prob <- seqstatd(ref)[["Frequencies"]]
+  data_prob <- seqstatd(data)[["Frequencies"]]
+  
+  dist <- 0
+  for (i in 1:ncol(ref_prob)){
+    this_ref <- as.vector(ref_prob[,i])
+    this_data <- as.vector(data_prob[,i])
+    this_dist <- sum((this_ref - this_data)^2)
+    dist <- dist + this_dist
+  }
+  return(dist)
+}
+```
+
+```{r}
+sum_of_state_pct(sequences_T, sim_seqs_cluster_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_T)
+sum_of_state_pct(sequences_T, sim_seqs_cluster_order2_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_order2_T)
+sum_of_state_pct(sequences_T, sim_seqs_cluster_TVMC_T)
+sum_of_state_pct(sequences_T, sim_seqs_noCluster_TVMC_T)
+sum_of_state_pct(sequences_T, sim_seqs_imputed_cluster_T)
+sum_of_state_pct(sequences_T, sim_seqs_imputed_noCluster_T)
+sum_of_state_pct(sequences_T, sim_seqs_imputed_cluster_order2_T)
+sum_of_state_pct(sequences_T, sim_seqs_imputed_noCluster_order2_T)
+```
+
+## Entropy
+
+```{r}
+entropy1 <- TraMineR::seqient(sequences_T)
+entropy6 <- TraMineR::seqient(sim_seqs_cluster_TVMC_T)
+entropy7 <- TraMineR::seqient(sim_seqs_noCluster_TVMC_T)
+entropy8 <- TraMineR::seqient(sim_seqs_imputed_cluster_T)
+entropy9 <- TraMineR::seqient(sim_seqs_imputed_noCluster_T)
+entropy10 <- TraMineR::seqient(sim_seqs_imputed_cluster_order2_T)
+entropy11 <- TraMineR::seqient(sim_seqs_imputed_noCluster_order2_T)
+```
+
+```{r}
+entropies <- as.data.frame(cbind(c(entropy1, entropy6, entropy7, entropy8, entropy9, entropy10, entropy11), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Our Method",1929*2), rep("Our Method + order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(entropies) <- c("Length", "Method","Clustered")
+entropies$Length <- as.numeric(entropies$Length)
+```
+
+```{r}
+ggplot(data = entropies, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 0.02) +
+  theme_bw()
+```
+
+
+## Transition Matrix?
+
+```{r}
+tm1 <- seqtrate(sequences_T)
+tm6 <- seqtrate(sim_seqs_cluster_TVMC_T)
+tm7 <- seqtrate(sim_seqs_noCluster_TVMC_T)
+tm8 <- seqtrate(sim_seqs_imputed_cluster_T)
+tm9 <- seqtrate(sim_seqs_imputed_noCluster_T)
+tm10 <- seqtrate(sim_seqs_imputed_cluster_order2_T)
+tm11 <- seqtrate(sim_seqs_imputed_noCluster_order2_T)
+```
+
+```{r}
+heatmap(tm1 - tm6, Rowv = NA, Colv = NA)
+heatmap(tm1 - tm7, Rowv = NA, Colv = NA)
+heatmap(tm1 - tm8, Rowv = NA, Colv = NA)
+heatmap(tm1 - tm9, Rowv = NA, Colv = NA)
+heatmap(tm1 - tm10, Rowv = NA, Colv = NA)
+heatmap(tm1 - tm11, Rowv = NA, Colv = NA)
+```
+
+
+## Durations of each state
+
+```{r}
+find_lengths <- function(seq, state){
+  rled <- rle(seq)
+  lengths <- rled$lengths[which(rled$values == state)]
+  return(lengths)
+}
+
+works <- unlist(apply(sequences, 1, find_lengths, state = "WORK"))
+homes <- unlist(apply(sequences, 1, find_lengths, state = "HOME"))
+cars <- unlist(apply(sequences, 1, find_lengths, state = "CAR"))
+
+g1 <- ggplot(data = data.frame(works), aes(x = works)) + 
+  geom_density() +
+  scale_x_continuous(limits = c(0, 1440)) +
+  theme_bw() + 
+  xlab("Duration of work episodes") + 
+  ggtitle("Distribution of work episodes")
+
+g2 <- ggplot(data = data.frame(homes), aes(x = homes)) + 
+  geom_density() +
+  scale_x_continuous(limits = c(0, 1440)) +
+  theme_bw() + 
+  xlab("Duration of home episodes") + 
+  ggtitle("Distribution of home episodes")
+
+g3 <- ggplot(data = data.frame(cars), aes(x = cars)) + 
+  geom_density() + 
+  scale_x_continuous(limits = c(0, 1440)) +
+  theme_bw() + 
+  xlab("Duration of car episodes") + 
+  ggtitle("Distribution of car episodes")
+  
+
+grid.arrange(g1,g2,g3, nrow = 3)
+```
+
+
+

@@ -45,6 +45,11 @@ impute <- function(sequences, window){
 # imputed_seqs_work <- cbind(sequences_work, imputed)
 # write.csv(imputed_seqs_work, "imputed_seqs_work.csv")
 
+# set.seed(480)
+# imputed <- impute(sequences_work_v2, 60) # v2 means that workdays have at least 30 min of work
+# imputed_seqs_work_v2 <- cbind(sequences_work_v2, imputed)
+# write.csv(imputed_seqs_work_v2, "imputed_seqs_work_v2.csv")
+
 
 # set.seed(460)
 # imputed2 <- impute(sequences, 60)
