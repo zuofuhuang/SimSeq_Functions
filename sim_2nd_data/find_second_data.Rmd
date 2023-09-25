@@ -1,0 +1,70 @@
+---
+title: "Find second data"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r}
+# library(rnhanesdata)
+# 
+# accel_ls <- process_accel(names_accel_xpt = c("PAXRAW_C"), local=FALSE,
+#                           urls=c("https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/PAXRAW_C.ZIP"))
+# flags_ls <- process_flags(accel_ls)
+# 
+# PAXINTEN_C <- accel_ls$PAXINTEN_C
+# FLags_C <- flags_ls$Flags_C
+# 
+# write.csv(PAXINTEN_C, file="PAXINTEN_C.csv", row.names=FALSE)
+# write.csv(FLags_C, file="FLags_C.csv", row.names=FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(zoo)
+
+accel <- read.csv("PAXINTEN_C.csv")
+flag <- read.csv("FLags_C.csv")
+```
+
+```{r}
+accel <- accel[-which(rowSums(is.na(accel)) != 0),]
+accel <- accel[,6:1445]
+
+# Categories
+# accel_rolled <- data.frame(apply(accel, MARGIN = 1, FUN = rollmean, k = 3))
+# all <- as.vector(accel_rolled)
+# ecdf(all)(c(0, 152, 456, 760, 1390, 2020))
+
+# c(0,1,152,456,760,1390,2020,Inf)
+change_row <- function(vec, thresholds){
+  cutted <- cut(vec, breaks = thresholds, right = FALSE)
+  levels(cutted) <- 1:(length(thresholds) - 1)
+  return(cutted)
+}
+
+kay <- 5
+
+accel_final <- matrix(NA, nrow = nrow(accel), ncol = 1441 - kay)
+
+for (i in 1:nrow(accel)){
+  vec <- as.vector(unlist(accel[i,]))
+  vec <- rollmean(vec, k = kay)
+  accel_final[i,] <- change_row(vec, c(0,1,760,2020,Inf))
+}
+
+accel_final <- data.frame(accel_final)
+```
+
+```{r}
+set.seed(2023)
+rows <- sample(1:nrow(accel_final), 2000, replace = F)
+accel_subset <- accel_final[rows,]
+
+write.csv(accel_subset, "dat2_s4k5.csv")
+```
+
+
+
+
+
