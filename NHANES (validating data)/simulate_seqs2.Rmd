@@ -1,0 +1,124 @@
+---
+title: "Document for synthesizing sequences"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+library(TraMineR)
+library(performance)
+library(GLMMadaptive)
+library(pscl)
+library(rbenchmark)
+library(foreach)
+library(doParallel)
+library(fastcluster)
+library(MASS)
+library(clValid)
+library(stringr)
+library(clv)
+library(TraMineRextras)
+library(logspline)
+```
+
+```{r}
+source("../SimSeq_Func/clust_assign_func.R")
+
+source("clust.R")
+# No need for order 2
+# source("TVMC.R")
+```
+
+```{r}
+# 4 states, k = 5 for smoothing
+sequences <- read.csv("dat2_s4k5.csv")[,-1]
+# sequences <- seqdef(sequences)
+
+seq_distances <- read.csv("seq_distances_s4k5.csv")[,-1]
+# costs <- seqcost(sequences, method = "TRATE")
+# seq_distances <- seqdist(sequences, method = "OM", indel = costs$indel, sm = costs$sm)
+
+# Divide up into clusters by Dunn index, then regroup.
+# cluster_assignment <- create_clusters_Dunn(seq_distances)
+# cluster_assignment <- reorder_cluster_assignment(cluster_assignment)
+# cluster_assignment[cluster_assignment > 2] <- 3
+
+# By when they first separate
+hclust_real <- stats::hclust(as.dist(seq_distances), method = "average")
+fit_real <- cutree(hclust_real, k = 30)
+fit_real <- reorder_cluster_assignment(fit_real)
+fit_real[fit_real > 3] <- 4
+```
+
+
+## Simulate sequences from original data
+
+For all simulated sequences, the seed is 1:n + c, different for each sequence.
+
+```{r}
+# 10 second each
+sim_seqs_noCluster <- parallel_simulate_multiple_sequences(sequences, rep(1,2000), n = 2000, seeds = 1:2000)
+
+sim_seqs_cluster <- parallel_simulate_multiple_sequences(sequences, fit_real, n = 2000, seeds = 1:2000 + 2000*1)
+```
+
+
+```{r}
+sim_seqs_noCluster_TVMC <- parallel_simulate_multiple_sequences(sequences, rep(1, 2000), n = 2000, seeds = 1:2000 + 2000*4)
+
+sim_seqs_cluster_TVMC <- parallel_simulate_multiple_sequences(sequences, fit_real, n = 2000, seeds = 1:2000 + 2000*5)
+```
+
+
+
+## Use imputed sequences (Result 8-11)
+
+```{r}
+imputed_seqs <- read.csv("imputed_seqs_s4k5.csv")[,-1]
+```
+
+
+```{r}
+sim_seqs_imputed_noCluster <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,2000), n = 2000, seeds = 1:2000 + 2000*10)
+
+sim_seqs_imputed_cluster <- parallel_simulate_multiple_sequences(imputed_seqs, fit_real, n = 2000, seeds = 1:2000 + 2000*11)
+```
+
+
+
+## Change time window
+
+```{r}
+imputed_seqs <- read.csv("imputed_seqs_s4k5.csv")[,-1]
+```
+
+## time window = 10 and 30
+
+```{r}
+sim_seqs_imputed_noCluster_10min_s4k5 <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,2000), n = 2000, seeds = 1:2000 + 2000*51, margin = 10)
+
+write.csv(sim_seqs_imputed_noCluster_10min_s4k5, "sim_seqs_imputed_noCluster_10min_s4k5.csv")
+
+sim_seqs_imputed_cluster_10min_s4k5 <- parallel_simulate_multiple_sequences(imputed_seqs, fit_real, n = 2000, seeds = 1:2000 + 2000*52, margin = 10)
+
+write.csv(sim_seqs_imputed_cluster_10min_s4k5, "sim_seqs_imputed_cluster_10min_s4k5.csv")
+
+
+
+
+
+sim_seqs_imputed_noCluster_30min_s4k5 <- parallel_simulate_multiple_sequences(imputed_seqs, rep(1,2000), n = 2000, seeds = 1:2000 + 2000*53, margin = 30)
+
+write.csv(sim_seqs_imputed_noCluster_30min_s4k5, "sim_seqs_imputed_noCluster_30min_s4k5.csv")
+
+
+sim_seqs_imputed_cluster_30min_s4k5 <- parallel_simulate_multiple_sequences(imputed_seqs, fit_real, n = 2000, seeds = 1:2000 + 2000*54, margin = 30)
+
+write.csv(sim_seqs_imputed_cluster_30min_s4k5, "sim_seqs_imputed_cluster_30min_s4k5.csv")
+```
+
+
+
+

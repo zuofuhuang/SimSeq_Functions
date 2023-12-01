@@ -9,7 +9,7 @@ library(tidyverse); library(ggplot2); library(lubridate); library(TraMineR); lib
 library(GLMMadaptive); library(pscl); library(gridExtra); library(MASS)
 library(clValid); library(clv); library(TraMineRextras); library(simukde)
 
-source("eval_functions.R")
+source("../simseq_Func/eval_functions.R")
 ```
 
 
@@ -422,18 +422,18 @@ ggplot(data = dat_car, aes(y = vecs, x = position, group = category, color = cat
   theme(legend.position = "bottom")
 
 
-dists_car_no0 <- lapply(dists_car, function(x) x[which(x!=0)])
-dat_car_no0 <- create_ecdf_data(dists_car_no0, 1440)
-
-ggplot(data = dat_car_no0, aes(y = vecs, x = position, group = category, color = category)) +
-  geom_smooth(se = F, method = "gam") + 
-  labs(x = "Car durations", y = "Difference in ecdf") +
-  scale_colour_manual(values = colors_pal[2:7], labels = c("60 min order 1", "60 min order 2", "30 min order 1", "30 min order 2", "120 min order 1", "120 min order 2")) +
-  xlim(0, 120) + # changed from 1440 to 120?
-  ylim(-0.3,0.3) +
-  geom_abline(slope = 0, intercept = 0) + 
-  theme_bw() + 
-  theme(legend.position = "bottom")
+# dists_car_no0 <- lapply(dists_car, function(x) x[which(x!=0)])
+# dat_car_no0 <- create_ecdf_data(dists_car_no0, 1440)
+# 
+# ggplot(data = dat_car_no0, aes(y = vecs, x = position, group = category, color = category)) +
+#   geom_smooth(se = F, method = "gam") + 
+#   labs(x = "Car durations", y = "Difference in ecdf") +
+#   scale_colour_manual(values = colors_pal[2:7], labels = c("60 min order 1", "60 min order 2", "30 min order 1", "30 min order 2", "120 min order 1", "120 min order 2")) +
+#   xlim(0, 240) + # changed from 1440 to 120?
+#   ylim(-0.3,0.3) +
+#   geom_abline(slope = 0, intercept = 0) + 
+#   theme_bw() + 
+#   theme(legend.position = "bottom")
 ```
 
 

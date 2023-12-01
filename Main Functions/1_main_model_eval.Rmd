@@ -1,0 +1,944 @@
+---
+title: "Model evaluations"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse); library(ggplot2); library(lubridate); library(TraMineR); library(performance)
+library(GLMMadaptive); library(pscl); library(gridExtra); library(MASS)
+library(clValid); library(clv); library(TraMineRextras); library(simukde)
+
+source("eval_functions.R")
+```
+
+
+```{r}
+# "baseline" sequence
+sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
+```
+
+
+```{r}
+# TVMC on original sequences
+cluster_TVMC <- read.csv("../Data in use/sim_seqs_cluster_TVMC.csv")[,-1]
+noCluster_TVMC <- read.csv("../Data in use/sim_seqs_noCluster_TVMC.csv")[,-1]
+```
+
+
+```{r}
+# "basic" synthesis on original sequences (cluster/no cluster + order 1/2)
+cluster <- read.csv("../Data in use/sim_seqs_cluster.csv")[,-1]
+noCluster <- read.csv("../Data in use/sim_seqs_noCluster.csv")[,-1]
+
+cluster_order2 <- read.csv("../Data in use/sim_seqs_cluster_order2.csv")[,-1]
+noCluster_order2 <- read.csv("../Data in use/sim_seqs_noCluster_order2.csv")[,-1]
+```
+
+
+```{r}
+# "basic" synthesis on imputed sequences (cluster/no cluster + order 1/2)
+imputed_cluster <- read.csv("../Data in use/sim_seqs_imputed_cluster.csv")[,2:1441]
+imputed_noCluster <- read.csv("../Data in use/sim_seqs_imputed_noCluster.csv")[,2:1441]
+
+imputed_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_cluster_order2.csv")[,2:1441]
+imputed_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_order2.csv")[,2:1441]
+```
+
+
+
+
+```{r}
+# KDE synthesis on imputed sequences (cluster/no cluster + order 1/2)
+imputed_KDE_cluster <- read.csv("../Data in use/sim_seqs_imputed_KDE_cluster.csv")[,2:1441]
+imputed_KDE_noCluster <- read.csv("../Data in use/sim_seqs_imputed_KDE_noCluster.csv")[,2:1441]
+
+imputed_KDE_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_KDE_cluster_order2.csv")[,2:1441]
+imputed_KDE_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_KDE_noCluster_order2.csv")[,2:1441]
+```
+
+
+```{r}
+# logspline
+imputed_log_cluster <- read.csv("../Data in use/sim_seqs_imputed_log_cluster.csv")[,2:1441]
+imputed_log_noCluster <- read.csv("../Data in use/sim_seqs_imputed_log_noCluster.csv")[,2:1441]
+
+imputed_log_cluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_log_cluster_order2.csv")[,2:1441]
+imputed_log_noCluster_order2 <- read.csv("../Data in use/sim_seqs_imputed_log_noCluster_order2.csv")[,2:1441]
+```
+
+
+```{r}
+# Investigate effect of time window (30min/60min/120min) on imputed KDE sequences
+imputed_cluster_30 <- read.csv("../Data in use/sim_seqs_imputed_cluster_30min.csv")[,2:1441]
+# imputed_noCluster_30 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_30min.csv")[,2:1441]
+# 
+imputed_cluster_120 <- read.csv("../Data in use/sim_seqs_imputed_cluster_120min.csv")[,2:1441]
+# imputed_noCluster_120 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_120min.csv")[,2:1441]
+# 
+imputed_cluster_order2_30 <- read.csv("../Data in use/sim_seqs_imputed_cluster_order2_30min.csv")[,2:1441]
+# imputed_noCluster_order2_30 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_order2_30min.csv")[,2:1441]
+# 
+imputed_cluster_order2_120 <- read.csv("../Data in use/sim_seqs_imputed_cluster_order2_120min.csv")[,2:1441]
+# imputed_noCluster_order2_120 <- read.csv("../Data in use/sim_seqs_imputed_noCluster_order2_120min.csv")[,2:1441]
+```
+
+
+## Create TramineR objects
+
+```{r message=FALSE, warning=FALSE}
+# "baseline" sequences
+sequences_T <- seqdef(sequences)
+
+palette <- c("#009292","#FF6DB6","#B6DBFF","#FFB6DB","#490092","#999999","#DB6D00","#004949","#B66DFF","#6DB6FF","#920000","#924900","#006DDB")
+
+seqiplot(seqdef(sequences, cpal = palette), border = NA, cex.legend = 0.5, tlim = sample(1:1929, 100), ylab = NA, xtlab = NA)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# TVMC on original sequences
+cluster_TVMC_T <- seqdef(cluster_TVMC)
+noCluster_TVMC_T <- seqdef(noCluster_TVMC)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# "basic" synthesis on original sequences (cluster/no cluster + order 1/2)
+cluster_T <- seqdef(cluster)
+noCluster_T <- seqdef(noCluster)
+
+cluster_order2_T <- seqdef(cluster_order2)
+noCluster_order2_T <- seqdef(noCluster_order2)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# "basic" synthesis on imputed sequences (cluster/no cluster + order 1/2)
+imputed_cluster_T <- seqdef(imputed_cluster)
+imputed_noCluster_T <- seqdef(imputed_noCluster)
+
+imputed_cluster_order2_T <- seqdef(imputed_cluster_order2)
+imputed_noCluster_order2_T <- seqdef(imputed_noCluster_order2)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# KDE synthesis on imputed sequences (cluster/no cluster + order 1/2)
+imputed_KDE_cluster_T <- seqdef(imputed_KDE_cluster)
+imputed_KDE_noCluster_T <- seqdef(imputed_KDE_noCluster)
+
+imputed_KDE_cluster_order2_T <- seqdef(imputed_KDE_cluster_order2)
+imputed_KDE_noCluster_order2_T <- seqdef(imputed_KDE_noCluster_order2)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# logspline on imputed sequences (cluster/no cluster + order 1/2)
+imputed_log_cluster_T <- seqdef(imputed_log_cluster)
+imputed_log_noCluster_T <- seqdef(imputed_log_noCluster)
+
+imputed_log_cluster_order2_T <- seqdef(imputed_log_cluster_order2)
+imputed_log_noCluster_order2_T <- seqdef(imputed_log_noCluster_order2)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+# Investigate effect of time window (30min/60min/120min) on imputed sequences
+imputed_cluster_30_T <- seqdef(imputed_cluster_30)
+# imputed_noCluster_30_T <- seqdef(imputed_noCluster_30)
+# 
+imputed_cluster_120_T <- seqdef(imputed_cluster_120)
+# imputed_noCluster_120_T <- seqdef(imputed_noCluster_120)
+# 
+imputed_cluster_order2_30_T <- seqdef(imputed_cluster_order2_30)
+# imputed_noCluster_order2_30_T <- seqdef(imputed_noCluster_order2_30)
+# 
+imputed_cluster_order2_120_T <- seqdef(imputed_cluster_order2_120)
+# imputed_noCluster_order2_120_T <- seqdef(imputed_noCluster_order2_120)
+```
+
+
+
+```{r}
+sim_list <- list(sequences, cluster_TVMC, noCluster_TVMC, imputed_cluster, imputed_noCluster, imputed_cluster_order2, imputed_noCluster_order2)
+
+sim_list_T <- list(sequences_T, cluster_TVMC_T, noCluster_TVMC_T, imputed_cluster_T, imputed_noCluster_T, imputed_cluster_order2_T, imputed_noCluster_order2_T)
+```
+
+```{r}
+# sim_list_window <- list(sequences, imputed_cluster, imputed_cluster_order2, imputed_cluster_30, imputed_cluster_order2_30, imputed_cluster_120, imputed_cluster_order2_120)
+# 
+# sim_list_window_T <- list(sequences_T, imputed_cluster_T, imputed_cluster_order2_T, imputed_cluster_30_T, imputed_cluster_order2_30_T, imputed_cluster_120_T, imputed_cluster_order2_120_T)
+```
+
+
+
+# Main comparisons
+
+Evaluation criteria:
+
+1. Transition matrix and heatmap? (TO BE DEVELOPED)
+
+2. Distribution of state durations (Mean and SD of each activity)
+
+3. Distribution of number of distinct states (Mean and SD)
+
+4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+
+5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
+
+
+
+
+## 2. Distribution of state durations (Mean and SD of each activity)
+
+```{r}
+this <- lapply(sim_list_T, dist_of_activity_dur)
+means <- as.matrix(sapply(this,"[[", 1))
+means_prop <- means
+
+for (i in 2:7){
+  for (j in 1:13){
+    means_prop[j,i] <- paste0(round((means[j,i]/means[j,1] - 1) * 100,1), "%")
+  }
+}
+means <- round(means, 2)
+means_prop[,1] <- round(as.vector(as.numeric((means_prop[,1]), 2)), 2)
+
+
+
+sds <- as.matrix(sapply(this,"[[", 2))
+sds_prop <- sds
+
+for (i in 2:7){
+  for (j in 1:13){
+    sds_prop[j,i] <- paste0(round((sds[j,i]/sds[j,1] - 1) * 100,1), "%")
+  }
+}
+sds <- round(sds, 2)
+sds_prop[,1] <- round(as.vector(as.numeric((sds_prop[,1]), 2)), 2)
+```
+
+
+### NEW:
+
+```{r}
+# new <- sapply(sim_list_T, dist_of_occurrences)
+# numbers <- as.data.frame(new[40:78,])
+# numbers <- as.data.frame(sapply(numbers, as.numeric))
+# numbers <- numbers %>%
+#   mutate(across(where(is.numeric), round, digits = 2))
+# 
+# result <- cbind(as.vector(new[1:39,1]), rep(c("Average occurrence time", "Duration mean", "Duration SD"), 13), numbers)
+# 
+# colnames(result) <- c("State", "Statistic", "Original\nsequences", "TVMC\ncluster", "TVMC\nno cluster", "paired-MC\ncluster", "paired-MC\nno cluster", "paired-MC order 2\n cluster", "paired-MC order 2\n no cluster")
+# 
+# write.csv(result, "summarystat.csv")
+```
+
+
+
+## 3. Distribution of number of distinct states (Mean and SD)
+
+```{r}
+dists <- lapply(sim_list_T, num_of_distinct_states)
+
+means <- sapply(dists, mean)
+round(means, 2)
+sds <- sapply(dists, sd)
+round(sds, 2)
+```
+
+
+## 4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+
+```{r}
+entropies <- lapply(sim_list_T, TraMineR::seqient)
+
+pvalues <- c()
+for (i in 2:7){
+  pvalues <- c(pvalues, ks.test(entropies[[1]], entropies[[i]])$p.value)
+}
+
+pvalues
+```
+
+```{r}
+# Consider plots
+entropy_dat <- as.data.frame(cbind(c(entropies[[1]], entropies[[2]], entropies[[3]], entropies[[4]], entropies[[5]], entropies[[6]], entropies[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(entropy_dat) <- c("Length", "Method", "Clustered")
+entropy_dat$Length <- as.numeric(entropy_dat$Length)
+entropy_dat$Method <- factor(entropy_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = entropy_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 0.02) +
+  theme_bw()
+```
+
+
+## 5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
+
+### **WORK**
+
+```{r}
+dists <- lapply(sim_list_T, length_of_certain_activity, activity = "WORK")
+
+pvalues_work <- c()
+for (i in 2:7){
+  pvalues_work <- c(pvalues_work, ks.test(dists[[1]], dists[[i]])$p.value)
+}
+
+pvalues_work
+
+work_dist_dat <- as.data.frame(cbind(c(dists[[1]], dists[[2]], dists[[3]], dists[[4]], dists[[5]], dists[[6]], dists[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(work_dist_dat) <- c("Length", "Method", "Clustered")
+work_dist_dat$Length <- as.numeric(work_dist_dat$Length)
+work_dist_dat$Method <- factor(work_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = work_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+
+ggplot(data = work_dist_dat[work_dist_dat$Length != 0,], aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+```
+
+
+```{r}
+colors_pal  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# len: length of the sequence: 1440 for a default daily sequence
+create_ecdf_data <- function(distances, len){
+  vecs <- c()
+  position <- c()
+  category <- c()
+  ref <- ecdf(distances[[1]])(0:len)
+  for (i in 2:length(distances)){
+    vecs <- c(vecs, ecdf(distances[[i]])(0:len) - ref)
+    position <- c(position, 0:len)
+    category <- c(category, rep(i, len+1))
+  }
+  dat <- as.data.frame(cbind(vecs, position, category))
+  dat$category <- as.factor(dat$category)
+  return(dat)
+}
+
+dat <- create_ecdf_data(dists, 1440)
+
+ggplot(data = dat, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+dists_no0 <- lapply(dists, function(x) x[which(x!=0)])
+dat_no0 <- create_ecdf_data(dists_no0, 1440)
+
+ggplot(data = dat_no0, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+
+### **HOME**
+
+```{r}
+dists_home <- lapply(sim_list_T, length_of_certain_activity, activity = "HOME")
+
+pvalues_home <- c()
+for (i in 2:7){
+  pvalues_home <- c(pvalues_home, ks.test(dists_home[[1]], dists_home[[i]])$p.value)
+}
+
+pvalues_home
+
+home_dist_dat <- as.data.frame(cbind(c(dists_home[[1]], dists_home[[2]], dists_home[[3]], dists_home[[4]], dists_home[[5]], dists_home[[6]], dists_home[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(home_dist_dat) <- c("Length", "Method", "Clustered")
+home_dist_dat$Length <- as.numeric(home_dist_dat$Length)
+home_dist_dat$Method <- factor(home_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = home_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+
+ggplot(data = home_dist_dat[home_dist_dat$Length != 1440,], aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+```
+
+
+```{r}
+dat_home <- create_ecdf_data(dists_home, 1440)
+
+ggplot(data = dat_home, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+dists_home_no1440 <- lapply(dists_home, function(x) x[which(x!=1440)])
+dat_home_no1440 <- create_ecdf_data(dists_home_no1440, 1440)
+
+ggplot(data = dat_home_no1440, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+
+### **car**
+
+```{r}
+dists_car <- lapply(sim_list_T, length_of_certain_activity, activity = "CAR")
+
+pvalues_car <- c()
+for (i in 2:7){
+  pvalues_car <- c(pvalues_car, ks.test(dists_car[[1]], dists_car[[i]])$p.value)
+}
+
+pvalues_car
+
+car_dist_dat <- as.data.frame(cbind(c(dists_car[[1]], dists_car[[2]], dists_car[[3]], dists_car[[4]], dists_car[[5]], dists_car[[6]], dists_car[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(car_dist_dat) <- c("Length", "Method", "Clustered")
+car_dist_dat$Length <- as.numeric(car_dist_dat$Length)
+car_dist_dat$Method <- factor(car_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = car_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 5) +
+  theme_bw()
+```
+
+
+```{r}
+dat_car <- create_ecdf_data(dists_car, 1440)
+
+ggplot(data = dat_car, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 120) +  # changed from 1440 to 120?
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+
+
+
+dists_car_no0 <- lapply(dists_car, function(x) x[which(x!=0)])
+dat_car_no0 <- create_ecdf_data(dists_car_no0, 1440)
+
+ggplot(data = dat_car_no0, aes(y = vecs, x = position, group = category, color = category)) +
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 120) + # changed from 1440 to 120?
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+### **Leisure and recreation**
+
+```{r}
+dists_LR <- lapply(sim_list_T, length_of_certain_activity, activity = "LEISURE_RECREATION")
+
+pvalues_LR <- c()
+for (i in 2:7){
+  pvalues_LR <- c(pvalues_LR, ks.test(dists_LR[[1]], dists_LR[[i]])$p.value)
+}
+
+pvalues_LR
+
+LR_dist_dat <- as.data.frame(cbind(c(dists_LR[[1]], dists_LR[[2]], dists_LR[[3]], dists_LR[[4]], dists_LR[[5]], dists_LR[[6]], dists_LR[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(LR_dist_dat) <- c("Length", "Method", "Clustered")
+LR_dist_dat$Length <- as.numeric(LR_dist_dat$Length)
+LR_dist_dat$Method <- factor(LR_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+# ggplot(data = LR_dist_dat, aes(x = Length)) +
+#   facet_grid(Clustered ~ Method) +
+#   geom_histogram(binwidth = 30) +
+#   theme_bw()
+
+ggplot(data = LR_dist_dat[LR_dist_dat$Length != 0,], aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 20) +
+  theme_bw()
+```
+
+
+```{r}
+dists_LR_no0 <- lapply(dists_LR, function(x) x[which(x!=0)])
+dat_LR_no0 <- create_ecdf_data(dists_LR_no0, 1440)
+
+ggplot(data = dat_LR_no0, aes(y = vecs, x = position, group = category, color = category)) +
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) +
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+### **Personal Business**
+
+
+```{r}
+dists_PB <- lapply(sim_list_T, length_of_certain_activity, activity = "PERSONAL_BUSINESS")
+
+pvalues_PB <- c()
+for (i in 2:7){
+  pvalues_PB <- c(pvalues_PB, ks.test(dists_PB[[1]], dists_PB[[i]])$p.value)
+}
+
+pvalues_PB
+
+PB_dist_dat <- as.data.frame(cbind(c(dists_PB[[1]], dists_PB[[2]], dists_PB[[3]], dists_PB[[4]], dists_PB[[5]], dists_PB[[6]], dists_PB[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(PB_dist_dat) <- c("Length", "Method", "Clustered")
+PB_dist_dat$Length <- as.numeric(PB_dist_dat$Length)
+PB_dist_dat$Method <- factor(PB_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = PB_dist_dat[PB_dist_dat$Length != 0,], aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 20) +
+  theme_bw()
+```
+
+```{r}
+dists_PB_no0 <- lapply(dists_PB, function(x) x[which(x!=0)])
+dat_PB_no0 <- create_ecdf_data(dists_PB_no0, 1440)
+
+ggplot(data = dat_PB_no0, aes(y = vecs, x = position, group = category, color = category)) +
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Time", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) +
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+## NEW:
+
+### **WORK**
+
+```{r}
+dists <- lapply(sim_list_T, dist_of_state, activity = "WORK")
+
+pvalues_work <- c()
+for (i in 2:7){
+  pvalues_work <- c(pvalues_work, ks.test(dists[[1]], dists[[i]])$p.value)
+}
+
+pvalues_work
+
+work_dist_dat <- as.data.frame(cbind(c(dists[[1]], dists[[2]], dists[[3]], dists[[4]], dists[[5]], dists[[6]], dists[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(work_dist_dat) <- c("Length", "Method", "Clustered")
+work_dist_dat$Length <- as.numeric(work_dist_dat$Length)
+work_dist_dat$Method <- factor(work_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = work_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+
+
+colors_pal  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+dat <- create_ecdf_data(dists, 1440)
+
+ggplot(data = dat, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Work durations", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+
+### **HOME**
+
+```{r}
+dists_home <- lapply(sim_list_T, dist_of_state, activity = "HOME")
+
+pvalues_home <- c()
+for (i in 2:7){
+  pvalues_home <- c(pvalues_home, ks.test(dists_home[[1]], dists_home[[i]])$p.value)
+}
+
+pvalues_home
+
+home_dist_dat <- as.data.frame(cbind(c(dists_home[[1]], dists_home[[2]], dists_home[[3]], dists_home[[4]], dists_home[[5]], dists_home[[6]], dists_home[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(home_dist_dat) <- c("Length", "Method", "Clustered")
+home_dist_dat$Length <- as.numeric(home_dist_dat$Length)
+home_dist_dat$Method <- factor(home_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = home_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 30) +
+  theme_bw()
+
+
+dat_home <- create_ecdf_data(dists_home, 1440)
+
+ggplot(data = dat_home, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Home durations", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) + 
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+### **car**
+
+```{r}
+dists_car <- lapply(sim_list_T, dist_of_state, activity = "CAR")
+
+pvalues_car <- c()
+for (i in 2:7){
+  pvalues_car <- c(pvalues_car, ks.test(dists_car[[1]], dists_car[[i]])$p.value)
+}
+
+pvalues_car
+
+car_dist_dat <- as.data.frame(cbind(c(dists_car[[1]], dists_car[[2]], dists_car[[3]], dists_car[[4]], dists_car[[5]], dists_car[[6]], dists_car[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(car_dist_dat) <- c("Length", "Method", "Clustered")
+car_dist_dat$Length <- as.numeric(car_dist_dat$Length)
+car_dist_dat$Method <- factor(car_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+ggplot(data = car_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 5) +
+  theme_bw()
+
+
+dat_car <- create_ecdf_data(dists_car, 1440)
+
+ggplot(data = dat_car, aes(y = vecs, x = position, group = category, color = category)) + 
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Car durations", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 120) +  # changed from 1440 to 120?
+  ylim(-0.15,0.15) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+### **Leisure and recreation**
+
+```{r}
+dists_LR <- lapply(sim_list_T, dist_of_state, activity = "LEISURE_RECREATION")
+
+pvalues_LR <- c()
+for (i in 2:7){
+  pvalues_LR <- c(pvalues_LR, ks.test(dists_LR[[1]], dists_LR[[i]])$p.value)
+}
+
+pvalues_LR
+
+LR_dist_dat <- as.data.frame(cbind(c(dists_LR[[1]], dists_LR[[2]], dists_LR[[3]], dists_LR[[4]], dists_LR[[5]], dists_LR[[6]], dists_LR[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(LR_dist_dat) <- c("Length", "Method", "Clustered")
+LR_dist_dat$Length <- as.numeric(LR_dist_dat$Length)
+LR_dist_dat$Method <- factor(LR_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+
+ggplot(data = LR_dist_dat, aes(x = Length)) +
+  facet_grid(Clustered ~ Method) +
+  geom_histogram(binwidth = 20) +
+  theme_bw()
+
+
+
+dat_LR <- create_ecdf_data(dists_LR, 1440)
+
+ggplot(data = dat_LR, aes(y = vecs, x = position, group = category, color = category)) +
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Leisure and recreation durations", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) +
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+### **Personal Business**
+
+
+```{r}
+dists_PB <- lapply(sim_list_T, dist_of_state, activity = "PERSONAL_BUSINESS")
+
+pvalues_PB <- c()
+for (i in 2:7){
+  pvalues_PB <- c(pvalues_PB, ks.test(dists_PB[[1]], dists_PB[[i]])$p.value)
+}
+
+pvalues_PB
+
+PB_dist_dat <- as.data.frame(cbind(c(dists_PB[[1]], dists_PB[[2]], dists_PB[[3]], dists_PB[[4]], dists_PB[[5]], dists_PB[[6]], dists_PB[[7]]), c(rep("Original data",1929),rep("TVMC",1929*2), rep("Paired-MC order 1",1929*2), rep("Paired-MC order 2", 1929*2)), c(rep("Clustered", 1929), rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929),rep("Clustered",1929),rep("Not Clustered",1929))))
+
+colnames(PB_dist_dat) <- c("Length", "Method", "Clustered")
+PB_dist_dat$Length <- as.numeric(PB_dist_dat$Length)
+PB_dist_dat$Method <- factor(PB_dist_dat$Method, levels = c("Original data","TVMC","Paired-MC order 1", "Paired-MC order 2"))
+
+
+dat_PB <- create_ecdf_data(dists_PB, 1440)
+
+ggplot(data = dat_PB, aes(y = vecs, x = position, group = category, color = category)) +
+  geom_smooth(se = F, method = "gam") + 
+  labs(x = "Personal business durations", y = "Difference in ecdf") +
+  scale_colour_manual(values = colors_pal[2:7], labels = c("TVMC clustered", "TVMC not clustered", "paired-MC clustered", "paired-MC not clustered", "paired-MC order 2 clustered", "paired-MC order 2 not clustered")) +
+  xlim(0, 1440) +
+  ylim(-0.3,0.3) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+### Others
+
+```{r}
+dists_bike <- lapply(sim_list_T, dist_of_state, activity = "BIKE")
+
+pvalues_bike <- c()
+for (i in 2:7){
+  pvalues_bike <- c(pvalues_bike, ks.test(dists_bike[[1]], dists_bike[[i]])$p.value)
+}
+
+pvalues_bike
+```
+
+
+```{r}
+dists_bus <- lapply(sim_list_T, dist_of_state, activity = "BUS")
+
+pvalues_bus <- c()
+for (i in 2:7){
+  pvalues_bus <- c(pvalues_bus, ks.test(dists_bus[[1]], dists_bus[[i]])$p.value)
+}
+
+pvalues_bus
+```
+
+
+```{r}
+dists_eatout <- lapply(sim_list_T, dist_of_state, activity = "EAT_OUT")
+
+pvalues_eatout <- c()
+for (i in 2:7){
+  pvalues_eatout <- c(pvalues_eatout, ks.test(dists_eatout[[1]], dists_eatout[[i]])$p.value)
+}
+
+pvalues_eatout
+```
+
+```{r}
+dists_edu <- lapply(sim_list_T, dist_of_state, activity = "EDUCATION")
+
+pvalues_edu <- c()
+for (i in 2:7){
+  pvalues_edu <- c(pvalues_edu, ks.test(dists_edu[[1]], dists_edu[[i]])$p.value)
+}
+
+pvalues_edu
+```
+
+
+```{r}
+dists_na <- lapply(sim_list_T, dist_of_state, activity = "N/A")
+
+pvalues_na <- c()
+for (i in 2:7){
+  pvalues_na <- c(pvalues_na, ks.test(dists_na[[1]], dists_na[[i]])$p.value)
+}
+
+pvalues_na
+```
+
+```{r}
+dists_other <- lapply(sim_list_T, dist_of_state, activity = "OTHER")
+
+pvalues_other <- c()
+for (i in 2:7){
+  pvalues_other <- c(pvalues_other, ks.test(dists_other[[1]], dists_other[[i]])$p.value)
+}
+
+pvalues_other
+```
+
+
+```{r}
+dists_shop <- lapply(sim_list_T, dist_of_state, activity = "SHOP")
+
+pvalues_shop <- c()
+for (i in 2:7){
+  pvalues_shop <- c(pvalues_shop, ks.test(dists_shop[[1]], dists_shop[[i]])$p.value)
+}
+
+pvalues_shop
+```
+
+```{r}
+dists_walk <- lapply(sim_list_T, dist_of_state, activity = "WALK")
+
+pvalues_walk <- c()
+for (i in 2:7){
+  pvalues_walk <- c(pvalues_walk, ks.test(dists_walk[[1]], dists_walk[[i]])$p.value)
+}
+
+pvalues_walk
+
+means_walk <- unlist(lapply(dists_walk, mean))
+sds_walk <- unlist(lapply(dists_walk, sd))
+```
+
+
+
+
+```{r}
+func <- function(state){
+  dists <- lapply(sim_list_T, dist_of_state, activity = state)
+  means_state <- unlist(lapply(dists, mean))
+  sds_state <- unlist(lapply(dists, sd))
+  means <- round(means_state, 2)
+  sds <- round(sds_state, 2)
+  return(rbind(means, sds))
+}
+
+all_states <- seqstatl(sequences)
+
+a1 <- func(all_states[1])
+a2 <- func(all_states[2])
+a3 <- func(all_states[3])
+a4 <- func(all_states[4])
+a5 <- func(all_states[5])
+a6 <- func(all_states[6])
+a7 <- func(all_states[7])
+a8 <- func(all_states[8])
+a9 <- func(all_states[9])
+a10 <- func(all_states[10])
+a11 <- func(all_states[11])
+a12 <- func(all_states[12])
+a13 <- func(all_states[13])
+
+table <- data.frame(rbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13))
+table <- cbind(rep(all_states, each = 2), table)
+```
+
+
+```{r}
+counts_work <- lapply(sim_list_T, count_of_state, activity = "WORK")
+means_work <- unlist(lapply(counts_work, mean))
+sds_work <- unlist(lapply(counts_work, sd))
+round(means_work, 2)
+round(sds_work, 2)
+
+counts_home <- lapply(sim_list_T, count_of_state, activity = "HOME")
+means_home <- unlist(lapply(counts_home, mean)) # sapply
+sds_home <- unlist(lapply(counts_home, sd))
+round(means_home, 2)
+round(sds_home, 2)
+
+original <- counts_home[[1]]
+
+round(sd(original[original < 50]), 2)
+
+counts_car <- lapply(sim_list_T, count_of_state, activity = "CAR")
+means_car <- unlist(lapply(counts_car, mean))
+sds_car <- unlist(lapply(counts_car, sd))
+round(means_car, 2)
+round(sds_car, 2)
+
+counts_LR <- lapply(sim_list_T, count_of_state, activity = "LEISURE_RECREATION")
+means_LR <- unlist(lapply(counts_LR, mean))
+sds_LR <- unlist(lapply(counts_LR, sd))
+round(means_LR, 2)
+round(sds_LR, 2)
+
+counts_PB <- lapply(sim_list_T, count_of_state, activity = "PERSONAL_BUSINESS")
+means_PB <- unlist(lapply(counts_PB, mean))
+sds_PB <- unlist(lapply(counts_PB, sd))
+round(means_PB, 2)
+round(sds_PB, 2)
+```
+
+
+
+## Others:
+
+Sum of percentage of each state at each time squared
+
+```{r}
+sapply(sim_list_T, sum_of_state_pct, ref = sequences_T)
+```
+
+
+```{r}
+num_distinct_periods_perday(sim_list_T[[19]], "WORK")
+```
+
