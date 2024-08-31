@@ -530,6 +530,7 @@ counts_4 <- lapply(sim_list_T, count_of_state, activity = "4")
 (means_4 <- unlist(lapply(counts_4, mean)))
 (sds_4 <- unlist(lapply(counts_4, sd)))
 ```
+
 ## 6. Turbulence
 
 ```{r}

@@ -968,20 +968,3 @@ for (i in 2:7){
 pvalues
 ```
 
-
-## 7. BIC/LRT
-
-```{r}
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[2]], method = "HAM")
-
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[3]], method = "HAM")
-
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[4]], method = "HAM")
-
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[5]], method = "HAM")
-
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[6]], method = "HAM")
-
-seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[7]], method = "HAM")
-```
-
