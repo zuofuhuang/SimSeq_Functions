@@ -188,7 +188,7 @@ Evaluation criteria:
 
 5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
 
-
+6. Turbulence
 
 
 ## 2. Distribution of state durations (Mean and SD of each activity)
@@ -563,6 +563,19 @@ ggplot(data = dat_PB_no0, aes(y = vecs, x = position, group = category, color = 
 ```
 
 
+## 4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+
+```{r}
+entropies <- lapply(sim_list_T, TraMineR::seqient)
+
+pvalues <- c()
+for (i in 2:7){
+  pvalues <- c(pvalues, ks.test(entropies[[1]], entropies[[i]])$p.value)
+}
+
+pvalues
+```
+
 ## NEW:
 
 ### **WORK**
@@ -861,84 +874,114 @@ sds_walk <- unlist(lapply(dists_walk, sd))
 
 
 ```{r}
-func <- function(state){
-  dists <- lapply(sim_list_T, dist_of_state, activity = state)
-  means_state <- unlist(lapply(dists, mean))
-  sds_state <- unlist(lapply(dists, sd))
-  means <- round(means_state, 2)
-  sds <- round(sds_state, 2)
-  return(rbind(means, sds))
-}
-
-all_states <- seqstatl(sequences)
-
-a1 <- func(all_states[1])
-a2 <- func(all_states[2])
-a3 <- func(all_states[3])
-a4 <- func(all_states[4])
-a5 <- func(all_states[5])
-a6 <- func(all_states[6])
-a7 <- func(all_states[7])
-a8 <- func(all_states[8])
-a9 <- func(all_states[9])
-a10 <- func(all_states[10])
-a11 <- func(all_states[11])
-a12 <- func(all_states[12])
-a13 <- func(all_states[13])
-
-table <- data.frame(rbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13))
-table <- cbind(rep(all_states, each = 2), table)
+# func <- function(state){
+#   dists <- lapply(sim_list_T, dist_of_state, activity = state)
+#   means_state <- unlist(lapply(dists, mean))
+#   sds_state <- unlist(lapply(dists, sd))
+#   means <- round(means_state, 2)
+#   sds <- round(sds_state, 2)
+#   return(rbind(means, sds))
+# }
+# 
+# all_states <- seqstatl(sequences)
+# 
+# a1 <- func(all_states[1])
+# a2 <- func(all_states[2])
+# a3 <- func(all_states[3])
+# a4 <- func(all_states[4])
+# a5 <- func(all_states[5])
+# a6 <- func(all_states[6])
+# a7 <- func(all_states[7])
+# a8 <- func(all_states[8])
+# a9 <- func(all_states[9])
+# a10 <- func(all_states[10])
+# a11 <- func(all_states[11])
+# a12 <- func(all_states[12])
+# a13 <- func(all_states[13])
+# 
+# table <- data.frame(rbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13))
+# table <- cbind(rep(all_states, each = 2), table)
 ```
 
 
 ```{r}
-counts_work <- lapply(sim_list_T, count_of_state, activity = "WORK")
-means_work <- unlist(lapply(counts_work, mean))
-sds_work <- unlist(lapply(counts_work, sd))
-round(means_work, 2)
-round(sds_work, 2)
-
-counts_home <- lapply(sim_list_T, count_of_state, activity = "HOME")
-means_home <- unlist(lapply(counts_home, mean)) # sapply
-sds_home <- unlist(lapply(counts_home, sd))
-round(means_home, 2)
-round(sds_home, 2)
-
-original <- counts_home[[1]]
-
-round(sd(original[original < 50]), 2)
-
-counts_car <- lapply(sim_list_T, count_of_state, activity = "CAR")
-means_car <- unlist(lapply(counts_car, mean))
-sds_car <- unlist(lapply(counts_car, sd))
-round(means_car, 2)
-round(sds_car, 2)
-
-counts_LR <- lapply(sim_list_T, count_of_state, activity = "LEISURE_RECREATION")
-means_LR <- unlist(lapply(counts_LR, mean))
-sds_LR <- unlist(lapply(counts_LR, sd))
-round(means_LR, 2)
-round(sds_LR, 2)
-
-counts_PB <- lapply(sim_list_T, count_of_state, activity = "PERSONAL_BUSINESS")
-means_PB <- unlist(lapply(counts_PB, mean))
-sds_PB <- unlist(lapply(counts_PB, sd))
-round(means_PB, 2)
+# counts_work <- lapply(sim_list_T, count_of_state, activity = "WORK")
+# means_work <- unlist(lapply(counts_work, mean))
+# sds_work <- unlist(lapply(counts_work, sd))
+# round(means_work, 2)
+# round(sds_work, 2)
+# 
+# counts_home <- lapply(sim_list_T, count_of_state, activity = "HOME")
+# means_home <- unlist(lapply(counts_home, mean)) # sapply
+# sds_home <- unlist(lapply(counts_home, sd))
+# round(means_home, 2)
+# round(sds_home, 2)
+# 
+# original <- counts_home[[1]]
+# 
+# round(sd(original[original < 50]), 2)
+# 
+# counts_car <- lapply(sim_list_T, count_of_state, activity = "CAR")
+# means_car <- unlist(lapply(counts_car, mean))
+# sds_car <- unlist(lapply(counts_car, sd))
+# round(means_car, 2)
+# round(sds_car, 2)
+# 
+# counts_LR <- lapply(sim_list_T, count_of_state, activity = "LEISURE_RECREATION")
+# means_LR <- unlist(lapply(counts_LR, mean))
+# sds_LR <- unlist(lapply(counts_LR, sd))
+# round(means_LR, 2)
+# round(sds_LR, 2)
+# 
+# counts_PB <- lapply(sim_list_T, count_of_state, activity = "PERSONAL_BUSINESS")
+# means_PB <- unlist(lapply(counts_PB, mean))
+# sds_PB <- unlist(lapply(counts_PB, sd))
+# round(means_PB, 2)
 round(sds_PB, 2)
 ```
 
 
 
-## Others:
-
-Sum of percentage of each state at each time squared
+## 6. Turbulence
 
 ```{r}
-sapply(sim_list_T, sum_of_state_pct, ref = sequences_T)
+turbulence <- lapply(sim_list_T, TraMineR::seqST)
+
+pvalues <- c()
+for (i in 2:7){
+  pvalues <- c(pvalues, ks.test(turbulence[[1]], turbulence[[i]])$p.value)
+}
+
+pvalues
+```
+
+## 7. Complexity index
+
+```{r}
+complexity <- lapply(sim_list_T, TraMineR::seqici)
+
+pvalues <- c()
+for (i in 2:7){
+  pvalues <- c(pvalues, ks.test(complexity[[1]], complexity[[i]])$p.value)
+}
+
+pvalues
 ```
 
 
+## 7. BIC/LRT
+
 ```{r}
-num_distinct_periods_perday(sim_list_T[[19]], "WORK")
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[2]], method = "HAM")
+
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[3]], method = "HAM")
+
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[4]], method = "HAM")
+
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[5]], method = "HAM")
+
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[6]], method = "HAM")
+
+seqCompare(seqdata = sim_list_T[[1]], seqdata2 = sim_list_T[[7]], method = "HAM")
 ```
 

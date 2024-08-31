@@ -530,4 +530,28 @@ counts_4 <- lapply(sim_list_T, count_of_state, activity = "4")
 (means_4 <- unlist(lapply(counts_4, mean)))
 (sds_4 <- unlist(lapply(counts_4, sd)))
 ```
+## 6. Turbulence
 
+```{r}
+turbulence <- lapply(sim_list_T, TraMineR::seqST)
+
+pvalues <- c()
+for (i in 2:5){
+  pvalues <- c(pvalues, ks.test(turbulence[[1]], turbulence[[i]])$p.value)
+}
+
+pvalues
+```
+
+## 7. Complexity index
+
+```{r}
+complexity <- lapply(sim_list_T, TraMineR::seqici)
+
+pvalues <- c()
+for (i in 2:5){
+  pvalues <- c(pvalues, ks.test(complexity[[1]], complexity[[i]])$p.value)
+}
+
+pvalues
+```
