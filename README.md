@@ -1,9 +1,9 @@
 # SimSeq
 
-A flexible framework for synthesizing human activity patterns with application to sequential categorical data 
+A Flexible Framework for Synthesizing Categorical Sequences with Application to Human Activity Patterns
 
-On arXiv and submitted. (https://arxiv.org/abs/2311.05819)
+On arXiv and submitted to Journal of Computational and Graphical Statistics. (https://arxiv.org/abs/2311.05819)
 
-The human activity sequence dataset ommited at the request of owner. Available upon request.
+The human activity sequence dataset omitted at the request of owner. Available upon request.
 
 

@@ -92,7 +92,24 @@ sequences_T <- seqdef(sequences)
 
 palette <- c("#009292","#FF6DB6","#B6DBFF","#FFB6DB","#490092","#999999","#DB6D00","#004949","#B66DFF","#6DB6FF","#920000","#924900","#006DDB")
 
-seqiplot(seqdef(sequences, cpal = palette), border = NA, cex.legend = 0.5, tlim = sample(1:1929, 100), ylab = NA, xtlab = NA)
+set.seed(121)
+sample_sequences <- sequences_T[sample(1:1929, 100),]
+
+seqiplot(seqdef(sample_sequences, cpal = palette), border = NA, cex.legend = 0.5, tlim = 1:100, ylab = NA, xtlab = NA, sortv = "from.start")
+
+imputed_cluster_order2_T <- seqdef(imputed_cluster_order2)
+
+set.seed(121)
+sample_sequences <- imputed_cluster_order2[sample(1:1929, 100),]
+
+seqiplot(seqdef(sample_sequences, cpal = palette), border = NA, cex.legend = 0.5, tlim = 1:100, ylab = NA, xtlab = NA, sortv = "from.start")
+
+cluster_TVMC_T <- seqdef(cluster_TVMC)
+
+set.seed(121)
+cluster_TVMC_T <- cluster_TVMC_T[sample(1:1929, 100),]
+
+seqiplot(seqdef(cluster_TVMC, cpal = palette), border = NA, cex.legend = 0.5, tlim = 1:100, ylab = NA, xtlab = NA, sortv = "from.start")
 ```
 
 
@@ -174,21 +191,19 @@ sim_list_T <- list(sequences_T, cluster_TVMC_T, noCluster_TVMC_T, imputed_cluste
 
 
 
-# Main comparisons
+## Main comparisons
 
 Evaluation criteria:
 
-1. Transition matrix and heatmap? (TO BE DEVELOPED)
+++ Distribution of state durations (Mean and SD of each activity)
 
-2. Distribution of state durations (Mean and SD of each activity)
+++ Distribution of number of distinct states (Mean and SD)
 
-3. Distribution of number of distinct states (Mean and SD)
+++ Distribution of entropies (and K-S test statistic p-value against original sequences)
 
-4. Distribution of entropies (and K-S test statistic p-value against original sequences)
+++ Distribution of daily hours spent on states (and K-S test statistic p-value against original sequences)
 
-5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
-
-6. Turbulence
+++ Turbulence and complexity index
 
 
 ## 2. Distribution of state durations (Mean and SD of each activity)
@@ -218,23 +233,6 @@ for (i in 2:7){
 }
 sds <- round(sds, 2)
 sds_prop[,1] <- round(as.vector(as.numeric((sds_prop[,1]), 2)), 2)
-```
-
-
-### NEW:
-
-```{r}
-# new <- sapply(sim_list_T, dist_of_occurrences)
-# numbers <- as.data.frame(new[40:78,])
-# numbers <- as.data.frame(sapply(numbers, as.numeric))
-# numbers <- numbers %>%
-#   mutate(across(where(is.numeric), round, digits = 2))
-# 
-# result <- cbind(as.vector(new[1:39,1]), rep(c("Average occurrence time", "Duration mean", "Duration SD"), 13), numbers)
-# 
-# colnames(result) <- c("State", "Statistic", "Original\nsequences", "TVMC\ncluster", "TVMC\nno cluster", "paired-MC\ncluster", "paired-MC\nno cluster", "paired-MC order 2\n cluster", "paired-MC order 2\n no cluster")
-# 
-# write.csv(result, "summarystat.csv")
 ```
 
 
@@ -279,7 +277,7 @@ ggplot(data = entropy_dat, aes(x = Length)) +
 ```
 
 
-## 5. Distribution of daily hours spent on work/home states (and K-S test statistic p-value against original sequences)
+## 5. Distribution of daily hours spent on states (and K-S test statistic p-value against original sequences)
 
 ### **WORK**
 
@@ -576,7 +574,7 @@ for (i in 2:7){
 pvalues
 ```
 
-## NEW:
+## Distribution of individual episode lengths 
 
 ### **WORK**
 
@@ -773,7 +771,7 @@ ggplot(data = dat_PB, aes(y = vecs, x = position, group = category, color = cate
 ```
 
 
-### Others
+### Dist_of_state for non major activity types
 
 ```{r}
 dists_bike <- lapply(sim_list_T, dist_of_state, activity = "BIKE")
@@ -871,36 +869,51 @@ sds_walk <- unlist(lapply(dists_walk, sd))
 ```
 
 
+## Number of daily episodes overall and for each major activity
 
 
 ```{r}
-# func <- function(state){
-#   dists <- lapply(sim_list_T, dist_of_state, activity = state)
-#   means_state <- unlist(lapply(dists, mean))
-#   sds_state <- unlist(lapply(dists, sd))
-#   means <- round(means_state, 2)
-#   sds <- round(sds_state, 2)
-#   return(rbind(means, sds))
-# }
-# 
-# all_states <- seqstatl(sequences)
-# 
-# a1 <- func(all_states[1])
-# a2 <- func(all_states[2])
-# a3 <- func(all_states[3])
-# a4 <- func(all_states[4])
-# a5 <- func(all_states[5])
-# a6 <- func(all_states[6])
-# a7 <- func(all_states[7])
-# a8 <- func(all_states[8])
-# a9 <- func(all_states[9])
-# a10 <- func(all_states[10])
-# a11 <- func(all_states[11])
-# a12 <- func(all_states[12])
-# a13 <- func(all_states[13])
-# 
-# table <- data.frame(rbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13))
-# table <- cbind(rep(all_states, each = 2), table)
+new <- sapply(sim_list_T, dist_of_occurrences)
+numbers <- as.data.frame(new[40:78,])
+numbers <- as.data.frame(sapply(numbers, as.numeric))
+numbers <- numbers %>%
+  mutate(across(where(is.numeric), round, digits = 2))
+
+result <- cbind(as.vector(new[1:39,1]), rep(c("Average occurrence time", "Duration mean", "Duration SD"), 13), numbers)
+
+colnames(result) <- c("State", "Statistic", "Original\nsequences", "TVMC\ncluster", "TVMC\nno cluster", "paired-MC\ncluster", "paired-MC\nno cluster", "paired-MC order 2\n cluster", "paired-MC order 2\n no cluster")
+
+# write.csv(result, "summarystat.csv")
+```
+
+```{r}
+func <- function(state){
+  dists <- lapply(sim_list_T, dist_of_state, activity = state)
+  means_state <- unlist(lapply(dists, mean))
+  sds_state <- unlist(lapply(dists, sd))
+  means <- round(means_state, 2)
+  sds <- round(sds_state, 2)
+  return(rbind(means, sds))
+}
+
+all_states <- seqstatl(sequences)
+
+a1 <- func(all_states[1])
+a2 <- func(all_states[2])
+a3 <- func(all_states[3])
+a4 <- func(all_states[4])
+a5 <- func(all_states[5])
+a6 <- func(all_states[6])
+a7 <- func(all_states[7])
+a8 <- func(all_states[8])
+a9 <- func(all_states[9])
+a10 <- func(all_states[10])
+a11 <- func(all_states[11])
+a12 <- func(all_states[12])
+a13 <- func(all_states[13])
+
+table <- data.frame(rbind(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13))
+table <- cbind(rep(all_states, each = 2), table)
 ```
 
 
@@ -911,15 +924,19 @@ sds_walk <- unlist(lapply(dists_walk, sd))
 # round(means_work, 2)
 # round(sds_work, 2)
 # 
-# counts_home <- lapply(sim_list_T, count_of_state, activity = "HOME")
-# means_home <- unlist(lapply(counts_home, mean)) # sapply
-# sds_home <- unlist(lapply(counts_home, sd))
-# round(means_home, 2)
-# round(sds_home, 2)
-# 
-# original <- counts_home[[1]]
-# 
-# round(sd(original[original < 50]), 2)
+counts_home <- lapply(sim_list_T, count_of_state, activity = "HOME")
+means_home <- unlist(lapply(counts_home, mean)) # sapply
+sds_home <- unlist(lapply(counts_home, sd))
+round(means_home, 2)
+round(sds_home, 2)
+
+original <- counts_home[[1]]
+round(mean(original[original < 30]), 2)
+round(sd(original[original < 30]), 2)
+
+pairedOrder2 <- counts_home[[6]]
+round(mean(original[original < 30]), 2)
+round(sd(original[original < 30]), 2)
 # 
 # counts_car <- lapply(sim_list_T, count_of_state, activity = "CAR")
 # means_car <- unlist(lapply(counts_car, mean))
@@ -937,7 +954,7 @@ sds_walk <- unlist(lapply(dists_walk, sd))
 # means_PB <- unlist(lapply(counts_PB, mean))
 # sds_PB <- unlist(lapply(counts_PB, sd))
 # round(means_PB, 2)
-round(sds_PB, 2)
+# round(sds_PB, 2)
 ```
 
 
@@ -966,5 +983,24 @@ for (i in 2:7){
 }
 
 pvalues
+```
+
+## 8. seqindic -> Number of states visited and transitions
+
+```{r}
+nsv1 <- TraMineR::seqindic(sim_list_T[[1]])$Visited
+nsv2 <- TraMineR::seqindic(sim_list_T[[2]])$Visited
+nsv3 <- TraMineR::seqindic(sim_list_T[[3]])$Visited
+nsv4 <- TraMineR::seqindic(sim_list_T[[4]])$Visited
+nsv5 <- TraMineR::seqindic(sim_list_T[[5]])$Visited
+nsv6 <- TraMineR::seqindic(sim_list_T[[6]])$Visited
+nsv7 <- TraMineR::seqindic(sim_list_T[[7]])$Visited
+
+ks.test(nsv1, nsv2)$p.value
+ks.test(nsv1, nsv3)$p.value
+ks.test(nsv1, nsv4)$p.value
+ks.test(nsv1, nsv5)$p.value
+ks.test(nsv1, nsv6)$p.value
+ks.test(nsv1, nsv7)$p.value
 ```
 

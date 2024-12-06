@@ -41,7 +41,7 @@ sequences <- read.csv("../Data in use/original_seqs.csv")[,-1]
 
 colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"), 
                  as.POSIXct("23:59:00", format = "%T"), by = "1 min"), "%H:%M"))
-# seq_distances <- read.csv("../Data in use/original_seqs_dist_om.csv")[,-1]
+seq_distances <- read.csv("../Data in use/original_seqs_dist_om.csv")[,-1]
 
 # Divide up into clusters by Dunn index, then regroup.
 # cluster_assignment <- create_clusters_Dunn(seq_distances)
@@ -49,12 +49,6 @@ colnames(sequences) <- c(format(seq(as.POSIXct("00:00:00", format = "%T"),
 # cluster_assignment[cluster_assignment > 2] <- 3
 cluster_assignment <- read.csv("../Data in use/cluster_assignment_for_MSI.csv")
 cluster_assignment <- as.vector(cluster_assignment[,2])
-
-# By when they first separate
-# hclust_real <- stats::hclust(as.dist(dist_mat_bySeparate), method = "average")
-# fit_real <- cutree(hclust_real, k = 15)
-# fit_real <- reorder_cluster_assignment(fit_real)
-# fit_real[fit_real > 2] <- 3
 ```
 
 

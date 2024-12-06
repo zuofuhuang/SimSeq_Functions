@@ -56,3 +56,8 @@ impute <- function(sequences, window){
 # imputed_seqs_s4k5 <- cbind(sequences, imputed)
 # write.csv(imputed_seqs_s4k5, "imputed_seqs_s4k5.csv")
 
+
+set.seed(460)
+imputed2 <- impute(accel_subset, 60)
+imputed_seqs_s4k5_updated <- cbind(accel_subset, imputed2)
+write.csv(imputed_seqs_s4k5_updated, "imputed_seqs_s4k5_updated.csv")

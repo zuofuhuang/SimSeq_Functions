@@ -1,0 +1,113 @@
+---
+title: "Find second data"
+author: "Zuofu Huang"
+output: html_document
+---
+
+```{r}
+# library(rnhanesdata)
+# 
+# accel_ls <- process_accel(names_accel_xpt = c("PAXRAW_C"), local=FALSE,
+#                           urls=c("https://wwwn.cdc.gov/Nchs/Nhanes/2003-2004/PAXRAW_C.ZIP"))
+# flags_ls <- process_flags(accel_ls)
+# 
+# PAXINTEN_C <- accel_ls$PAXINTEN_C
+# FLags_C <- flags_ls$Flags_C
+# 
+# write.csv(PAXINTEN_C, file="PAXINTEN_C.csv", row.names=FALSE)
+# write.csv(FLags_C, file="FLags_C.csv", row.names=FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(zoo)
+library(TraMineR)
+
+source("eval_functions.R")
+
+accel <- read.csv("PAXINTEN_C.csv")
+# flag <- read.csv("FLags_C.csv")
+```
+
+## With smoothing
+
+```{r}
+accel <- accel[-which(rowSums(is.na(accel)) != 0),]
+accel <- accel[,6:1445]
+
+
+set.seed(2023)
+rows <- sample(1:nrow(accel), 2000, replace = F)
+accel_subset <- accel[rows,]
+
+# Categories
+
+change_row <- function(vec, thresholds){
+  cutted <- cut(vec, breaks = thresholds, right = FALSE)
+  levels(cutted) <- 1:(length(thresholds) - 1)
+  return(cutted)
+}
+
+kay <- 10 # Could consider a different k too
+
+accel_final <- matrix(NA, nrow = nrow(accel_subset), ncol = 1441 - kay)
+
+for (i in 1:nrow(accel_subset)){
+  vec <- as.vector(unlist(accel_subset[i,]))
+  vec <- rollmean(vec, k = kay)
+  accel_final[i,] <- change_row(vec, c(0,99,759,2019,Inf))
+}
+
+accel_final <- data.frame(accel_final)
+```
+
+
+```{r}
+accel_final_T <- seqdef(accel_final)
+
+mean(num_of_distinct_states(accel_final_T)) 
+sd(num_of_distinct_states(accel_final_T))
+```
+
+```{r}
+write.csv(accel_final, "dat2_s4k10_updated.csv")
+```
+
+
+
+## Without smoothing
+
+Can't do without smoothing. Too many extremely short episodes due to the nature of human activity
+
+```{r}
+# change_row <- function(vec, thresholds){
+#   cutted <- cut(vec, breaks = thresholds, right = FALSE)
+#   levels(cutted) <- 1:(length(thresholds) - 1)
+#   return(cutted)
+# }
+# 
+# accel_final <- matrix(NA, nrow = nrow(accel), ncol = 1440)
+# 
+# for (i in 1:nrow(accel)){
+#   vec <- as.vector(unlist(accel[i,]))
+#   accel_final[i,] <- change_row(vec, c(0,100,760,2020,Inf))
+# }
+# 
+# 
+# set.seed(2023)
+# rows <- sample(1:nrow(accel_final), 2000, replace = F)
+# accel_subset_no_smoothing <- accel_final[rows,]
+# 
+# accel_subset_no_smoothing_T <- seqdef(accel_subset_no_smoothing)
+# 
+# mean(num_of_distinct_states(accel_subset_no_smoothing_T)) # 217.8
+# sd(num_of_distinct_states(accel_subset_no_smoothing_T)) # 126
+```
+
+
+
+
+
+
+
